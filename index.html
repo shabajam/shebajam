@@ -206,6 +206,17 @@ a{color:var(--accent)}
   .faq-video{max-width:240px}
   .faq-video-wrap{order:-1}
 }
+.app-dl-sec{background:var(--paper-2);}
+.app-dl-grid{display:flex; align-items:center; gap:30px; max-width:760px; margin:0 auto;}
+.app-dl-icon img{width:96px; height:96px; border-radius:22%; box-shadow:0 12px 28px rgba(11,74,85,.28); flex:0 0 auto;}
+.app-dl-cards{display:flex; gap:18px; flex:1; flex-wrap:wrap;}
+.app-dl-card{flex:1; min-width:220px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px;}
+.app-dl-card .adc-t{font-weight:700; margin-bottom:6px; font-size:15px;}
+.app-dl-card p{margin:0 0 4px; color:var(--muted); font-size:13.5px; line-height:1.7;}
+@media (max-width:820px){
+  .app-dl-grid{flex-direction:column; gap:18px;}
+  .app-dl-cards{flex-direction:column; width:100%;}
+}
 .hero-video-wrap{width:100%; justify-content:center}
 .hero-video{width:100%; max-width:480px; height:auto; display:block; background:transparent; pointer-events:none}
 @media (max-width:820px){
@@ -498,6 +509,27 @@ body.tool-page .site-footer{margin-top:0}
     </div>
   </div>
 
+  <div class="sec app-dl-sec">
+    <div class="container">
+      <div class="sec-head"><h2>📲 دانلود اپ موبایل</h2><p>بدون نیاز به گوگل‌پلی یا اپ‌استور — مستقیم از همین سایت روی گوشی نصب می‌شود.</p></div>
+      <div class="app-dl-grid">
+        <div class="app-dl-icon"><img src="icon-512.png" alt="آیکون حساب جمع" width="96" height="96"></div>
+        <div class="app-dl-cards">
+          <div class="app-dl-card">
+            <div class="adc-t">🤖 اندروید (Chrome)</div>
+            <p>روی دکمه‌ی زیر بزن؛ اگه مرورگرت پشتیبانی کنه، خودش پیشنهاد نصب می‌ده.</p>
+            <button type="button" id="pwaInstallBtn" class="btn-mint" style="display:none;">نصب اپ</button>
+            <p id="pwaInstallHint" style="margin-top:8px;">از منوی ⋮ مرورگر، «Add to Home screen» یا «نصب برنامه» را بزن.</p>
+          </div>
+          <div class="app-dl-card">
+            <div class="adc-t">🍎 آیفون (فقط Safari)</div>
+            <p>دکمه‌ی Share (مربع با فلش رو به بالا) را بزن، بعد «Add to Home Screen» را انتخاب کن.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="sec">
     <div class="container">
       <div class="sec-head"><h2>سؤال‌های پرتکرار</h2></div>
@@ -776,6 +808,7 @@ body.tool-page .site-footer{margin-top:0}
         <div class="card">
           <h2 style="margin:0 0 6px; font-size:18px">فعال‌سازی با کد</h2>
           <p style="margin:0 0 10px; color:var(--muted); font-size:14.5px">کد اشتراک را که بعد از پرداخت گرفته‌ای اینجا بگذار. اگر کد نداری، <a href="#/pricing">قیمت‌ها</a> را ببین.</p>
+          <a class="btn-blue" href="https://t.me/shabajambot" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; text-decoration:none;">💳 خرید اشتراک از طریق تلگرام</a>
           <label class="f"><span class="t">کد اشتراک</span><textarea id="actCodeAcc" dir="ltr" spellcheck="false" style="min-height:88px; font-size:12.5px; text-align:left"></textarea></label>
           <div class="row2" style="display:flex; gap:10px; margin-top:12px"><button class="btn-blue" id="actBtnAcc" type="button">فعال‌سازی</button><button class="btn-line" id="licRemove" type="button">حذف اشتراک از این دستگاه</button></div>
           <div class="msg" id="actMsgAcc" role="status"></div>
@@ -2538,6 +2571,28 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch(function(){});
   });
 }
+
+(function(){
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('pwaInstallBtn');
+    var hint = document.getElementById('pwaInstallHint');
+    if (btn){ btn.style.display = 'inline-block'; }
+    if (hint){ hint.style.display = 'none'; }
+  });
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.id === 'pwaInstallBtn' && deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(function(){ deferredPrompt = null; });
+    }
+  });
+  window.addEventListener('appinstalled', function(){
+    var btn = document.getElementById('pwaInstallBtn');
+    if (btn) btn.style.display = 'none';
+  });
+})();
 </script>
 </body>
 </html>
