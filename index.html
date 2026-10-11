@@ -3080,9 +3080,10 @@ function buildLoadXlsx(rows, per, opts, type){
     if (k == null) return;
     e.preventDefault();
     var i = +t.getAttribute('data-i');
-    /* اینتر در هر ستون: ردیف جدید زیر ردیف فعلی + رفتن به «شماره فاکتور» ردیف جدید */
+    /* اینتر: رفتن به همان ستون در ردیف بعدی؛ در آخرین ردیف، ردیف جدید ساخته می‌شود و مکان‌نما در همان ستون می‌ماند */
+    if (i < st.rows.length - 1){ focusLdCell(i + 1, k); return; }
     var nr = blank(); nr.invoice = loadNextInvoice(loadLastInvoice(st.rows, i));
-    st.rows.splice(i + 1, 0, nr); save(); render(); focusLdCell(i + 1, 'invoice');
+    st.rows.push(nr); save(); render(); focusLdCell(i + 1, k);
   });
 
   /* ---- کشیدن مثل اکسل (Fill Handle): مقدار سلول تا ردیف‌های پایین کپی می‌شود ---- */
