@@ -1260,7 +1260,8 @@ main{padding-bottom:calc(var(--nav-h) + 48px + env(safe-area-inset-bottom,0px))}
         'input[type=checkbox],input[type=radio]{width:20px;height:20px}' +
         '.sheet,.sheet-body,header.top{overflow:visible!important}.jcal-popup{left:0!important;top:calc(100% + 8px)!important;right:auto!important;width:min(300px,calc(100vw - 28px))!important;padding:14px!important;border-radius:20px!important;box-shadow:0 24px 60px rgba(0,0,0,.35)!important}' +
         '.jcal-grid button{min-height:40px!important;font-size:.95rem!important;border-radius:12px!important}.jcal-head button{width:38px!important;height:38px!important}.jcal-weekdays{font-size:.75rem!important}';
-      var tag = '<style id="sj-skin">' + css + '</style>';
+      var bridge = '(function(){function take(a){try{if(a.hasAttribute("download")&&/^(blob|data):/.test(a.href)&&parent.SJ_CAN_SEND&&parent.SJ_CAN_SEND()){var n=a.getAttribute("download")||"file";fetch(a.href).then(function(r){return r.blob()}).then(function(b){parent.SJ_SEND(n,b)});return true}}catch(e){}return false}var oc=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(take(this))return;return oc.apply(this,arguments)};var od=EventTarget.prototype.dispatchEvent;EventTarget.prototype.dispatchEvent=function(e){if(this instanceof HTMLAnchorElement&&e&&e.type==="click"&&take(this))return true;return od.apply(this,arguments)}})();';
+      var tag = '<style id="sj-skin">' + css + '</style><script>' + bridge + '<\/script>';
       return html.indexOf('</head>') > -1 ? html.replace('</head>', function(){ return tag + '</head>'; }) : tag + html;
     } catch (e) { return html; }
   };
@@ -2326,6 +2327,7 @@ var PLAN_LABEL = {t: 'هدیه سه‌روزه', w: 'هفتگی', m: 'ماهان
 
 /* ===================== generic table export: text / image / PDF ===================== */
 function genericDownloadBlob(filename, blob){
+  if (window.SJ_CAN_SEND && window.SJ_CAN_SEND()){ window.SJ_SEND(filename, blob); return; }
   var url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = filename; document.body.appendChild(a); a.click();
   document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
@@ -2889,6 +2891,7 @@ function buildLoadXlsx(rows, per, opts, type){
   }
   function exportAoa(onlyMerged){ return outputAoa(state.an, state.rows, state.cols, onlyMerged); }
   function saveBlob(name, blob){
+    if (window.SJ_CAN_SEND && window.SJ_CAN_SEND()){ window.SJ_SEND(name, blob); return; }
     if (dl){
       dl.save({filename: name, data: blob}).then(function(){ toast('فایل ذخیره شد'); }, function(e){
         var c = e && e.code; if (c === 'declined') return;
@@ -3326,16 +3329,62 @@ function buildLoadXlsx(rows, per, opts, type){
       return;
     }
     var r = await apiPost('/miniapp/trial', {initData: tgData()});
-    if (!r || !r.ok){ toast('اتصال برقرار نشد. دوباره امتحان کن.'); return; }
-    if (r.status === 'ok'){ await takeCode(r.code); toast('هدیه‌ی سه‌روزه فعال شد'); }
-    else if (r.status === 'used') toast('هدیه‌ی سه‌روزه را قبلاً گرفته‌ای.');
-    else if (r.status === 'active'){ await syncAccount(); toast('اشتراک فعال داری.'); }
-    else toast('الان ممکن نیست. کمی بعد دوباره امتحان کن.');
+    if (!r || !r.ok){ tgToast('اتصال برقرار نشد. دوباره امتحان کن.'); return; }
+    if (r.status === 'ok'){ await takeCode(r.code); tgToast('هدیه‌ی سه‌روزه فعال شد'); }
+    else if (r.status === 'used') tgToast('هدیه‌ی سه‌روزه را قبلاً گرفته‌ای.');
+    else if (r.status === 'active'){ await syncAccount(); tgToast('اشتراک فعال داری.'); }
+    else tgToast('الان ممکن نیست. کمی بعد دوباره امتحان کن.');
   }
+
+  var tgToastT;
+  function tgToast(msg){
+    var t = document.getElementById('toast'); if (!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(tgToastT); tgToastT = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+  }
+  function b64uBytes(x){
+    x = String(x).replace(/-/g, '+').replace(/_/g, '/'); while (x.length % 4) x += '=';
+    var bin = atob(x), o = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) o[i] = bin.charCodeAt(i); return o;
+  }
+  /* آدرس Worker ربات از روی لینکی که ربات داده (امضای آن با کلید عمومی تأیید می‌شود) */
+  async function loadApi(){
+    if (CONFIG.api) return;
+    try {
+      var tok = new URLSearchParams(location.search).get('cfg') || lsGet('sj_cfg');
+      if (!tok) return;
+      var parts = tok.split('.'); if (parts.length !== 2) return;
+      var pb = b64uBytes(parts[0]);
+      var key = await crypto.subtle.importKey('jwk', CONFIG.publicKey, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']);
+      var ok = await crypto.subtle.verify({name: 'ECDSA', hash: 'SHA-256'}, key, b64uBytes(parts[1]), pb);
+      var p = ok && JSON.parse(new TextDecoder().decode(pb));
+      if (p && p.v === 9 && /^https:\/\/[a-z0-9.-]+$/i.test(p.a)){ CONFIG.api = p.a; lsSet('sj_cfg', tok); }
+    } catch (e) {}
+  }
+  function blobToB64(blob){
+    return new Promise(function(res, rej){
+      var fr = new FileReader();
+      fr.onload = function(){ var r = String(fr.result); res(r.slice(r.indexOf(',') + 1)); };
+      fr.onerror = function(){ rej(fr.error); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  /* داخل تلگرام دانلود مستقیم کار نمی‌کند؛ فایل را ربات در چت خود کاربر می‌فرستد */
+  window.SJ_CAN_SEND = function(){ return !!(CONFIG.api && tgData()); };
+  window.SJ_SEND = async function(name, blob){
+    if (!window.SJ_CAN_SEND()) return false;
+    tgToast('در حال ارسال فایل به چت ربات...');
+    try {
+      var data = await blobToB64(blob);
+      var r = await apiPost('/miniapp/send', {initData: tgData(), name: name, mime: blob.type || '', data: data});
+      if (r && r.ok){ tgToast('فایل در چت ربات برایت فرستاده شد'); return true; }
+      tgToast(r && r.error === 'rate' ? 'کمی صبر کن و دوباره بزن.' : (r && r.error === 'big' ? 'فایل بزرگ است.' : 'ارسال نشد. دوباره امتحان کن.'));
+    } catch (e) { tgToast('ارسال نشد. دوباره امتحان کن.'); }
+    return false;
+  };
   window.SJ_SYNC = syncAccount; window.SJ_TRIAL = getTrial;
   ['trialBtnTool', 'trialBtnAcc'].forEach(function(i){ var b = $(i); if (b) b.addEventListener('click', getTrial); });
   document.addEventListener('visibilitychange', function(){ if (!document.hidden) syncAccount(); });
-  syncAccount();
+  loadApi().then(function(){ syncAccount(); });
 
   /* ---------- plans / contact ---------- */
   var FEATURES = ['دسترسی به همه‌ی ابزارها', 'بدون محدودیت تعداد ردیف و فایل', 'روی گوشی و کامپیوتر'];
