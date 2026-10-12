@@ -663,6 +663,31 @@ button:hover,.btn:hover{border-color:var(--accent)}
 .ldwrap,.crow{border-radius:14px}
 .ldt th{border-bottom-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+/* ==== v5 upgrades: table tools, dashboard, backup, bank badges ==== */
+.ldbar{display:flex; gap:8px; align-items:center; margin:0 0 10px; flex-wrap:wrap}
+.ldbar input{flex:1; min-width:160px}
+.ldbar button{padding:8px 14px}
+.ldbar button[disabled]{opacity:.45; cursor:not-allowed}
+.ldhide{display:none}
+[data-bank]::after{content:attr(data-bank); display:inline-block; margin-inline-start:8px; font-size:11.5px; padding:1px 9px; border-radius:99px; background:var(--accent-soft); color:var(--accent); font-weight:700; vertical-align:middle; line-height:1.7}
+[data-bank].bk-bad::after{background:var(--danger-bg); color:var(--danger)}
+.dash{max-width:560px; margin:0 auto 22px; background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:var(--shadow); text-align:start}
+.dash h3{margin:0 0 12px; font-size:15px; color:var(--ink)}
+.dsh-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.dsh-grid div{background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 6px; text-align:center}
+.dsh-grid b{display:block; font-size:19px; color:var(--ink)}
+.dsh-grid span{font-size:11.5px; color:var(--muted)}
+.dsh-rep{margin-top:14px}
+.dsh-rep h4{margin:0 0 6px; font-size:13px; color:var(--muted); font-weight:400}
+.rep-row{display:grid; grid-template-columns:64px 1fr auto; gap:8px; align-items:center; font-size:12.5px; margin:6px 0; color:var(--ink)}
+.rep-bar{height:8px; background:var(--line); border-radius:99px; overflow:hidden}
+.rep-bar i{display:block; height:100%; background:var(--accent); border-radius:99px}
+@media (max-width:480px){.dsh-grid{grid-template-columns:repeat(2,1fr)}}
+#bkCard{margin-top:16px}
+#bkCard h3{margin:0 0 6px; font-size:16px}
+#bkCard p{margin:0 0 12px; color:var(--muted); font-size:14px}
+#bkCard .bkrow{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1046,6 +1071,7 @@ button:hover,.btn:hover{border-color:var(--accent)}
         </section>
         <section>
           <div class="stats" id="ldStats"></div>
+          <div class="ldbar"><input type="text" id="ldFilter" placeholder="جستجو در ردیف‌ها (راننده، حساب، فاکتور...)" autocomplete="off"><button type="button" id="ldUndo" title="Ctrl+Z" disabled>برگشت</button><button type="button" id="ldRedo" title="Ctrl+Y" disabled>تکرار</button></div>
           <div class="ldwrap">
             <table class="ldt">
               <thead><tr><th>ردیف</th><th>شماره فاکتور</th><th>تاریخ</th><th>نام راننده</th><th>بشکه</th><th>مازال به لیتر</th><th>بشکه به لیتر</th><th>جمع بار لیتر</th><th>بشکه</th><th>فی</th><th>مبلغ / ریال</th><th>شماره حساب</th><th>صاحب حساب</th><th>ماشین</th><th></th></tr></thead>
@@ -3005,7 +3031,9 @@ function buildLoadXlsx(rows, per, opts, type){
   function todayJ(){ var d = new Date(), j = g2j(d.getFullYear(), d.getMonth() + 1, d.getDate()); return j[0] + '/' + pad2(j[1]) + '/' + pad2(j[2]); }
   function per(){ var p = parseAmount($('ldPer').value); return p > 0 ? p : 200; }
   function blank(){ return {invoice: '', date: todayJ(), driver: '', barrels: '', liters: '', fee: '', account: '', holder: '', car: ''}; }
+  var hist = [], hpos = -1, histT = null, restoring = false;
   function save(){
+    pushHist();
     clearTimeout(timer);
     timer = setTimeout(function(){
       lsSet(KEY, JSON.stringify({rows: st.rows, fee: $('ldFee').value, per: $('ldPer').value}));
@@ -3056,7 +3084,7 @@ function buildLoadXlsx(rows, per, opts, type){
       frag.appendChild(tr);
     });
     body.appendChild(frag);
-    totals(); refresh();
+    totals(); refresh(); applyFilter(); attachNames();
     if (focusLast){ var fk = (typeof focusLast === 'string') ? focusLast : 'driver'; var ins = body.querySelectorAll('tr:last-child input[data-k="' + fk + '"]'); if (ins[0]) ins[0].focus(); }
   }
   $('ldBody').addEventListener('input', function(e){
@@ -3074,16 +3102,111 @@ function buildLoadXlsx(rows, per, opts, type){
     var el = $('ldBody').querySelector('input[data-i="' + i + '"][data-k="' + k + '"]');
     if (el){ el.focus(); if (el.select) el.select(); }
   }
+  /* ---- جدول حرفه‌ای: برگشت/تکرار، جستجو، جهت‌نماها، چسباندن از اکسل ---- */
+  function commitHist(){
+    clearTimeout(histT); histT = null;
+    var s = JSON.stringify(st.rows);
+    if (hpos >= 0 && hist[hpos] === s) return;
+    hist = hist.slice(0, hpos + 1); hist.push(s); if (hist.length > 100) hist.shift();
+    hpos = hist.length - 1; histBtns();
+  }
+  function pushHist(){ if (restoring) return; clearTimeout(histT); histT = setTimeout(commitHist, 600); }
+  function histBtns(){ var u = $('ldUndo'), r = $('ldRedo'); if (u) u.disabled = hpos < 1; if (r) r.disabled = hpos >= hist.length - 1; }
+  function applyHist(p){
+    if (p < 0 || p >= hist.length) return;
+    var a = document.activeElement, fi = a && a.dataset && a.dataset.k ? [+a.dataset.i, a.dataset.k] : null;
+    restoring = true; hpos = p; st.rows = JSON.parse(hist[p]); save(); render(); restoring = false; histBtns();
+    if (fi && st.rows.length) focusLdCell(Math.min(fi[0], st.rows.length - 1), fi[1]);
+  }
+  function clearFilter(){ var f = $('ldFilter'); if (f && f.value) f.value = ''; }
+  function undo(){ if (histT) commitHist(); applyHist(hpos - 1); }
+  function redo(){ applyHist(hpos + 1); }
+  setTimeout(function(){ if (!hist.length){ hist = [JSON.stringify(st.rows)]; hpos = 0; histBtns(); } }, 0);
+  function applyFilter(){
+    var f = $('ldFilter'); if (!f) return;
+    var q = f.value.trim().toLowerCase(), trs = $('ldBody').rows;
+    for (var r = 0; r < trs.length; r++){
+      var row = st.rows[r];
+      if (!row){ trs[r].classList.remove('ldhide'); continue; }
+      var hit = !q || Object.keys(row).some(function(k){ return String(row[k]).toLowerCase().indexOf(q) >= 0; });
+      trs[r].classList.toggle('ldhide', !hit);
+    }
+  }
+  function attachNames(){
+    var els = $('ldBody').querySelectorAll('input[data-k="driver"],input[data-k="holder"]');
+    for (var n = 0; n < els.length; n++) els[n].setAttribute('list', 'ldNames');
+  }
+  if ($('ldFilter')) $('ldFilter').addEventListener('input', applyFilter);
+  if ($('ldUndo')) $('ldUndo').addEventListener('click', undo);
+  if ($('ldRedo')) $('ldRedo').addEventListener('click', redo);
+  /* ---- نام صاحب حساب از دفتر شبا: شماره حساب = ۱۹ رقم آخر شبا (مثل ابزار تبدیل) ---- */
+  function toEnD(s){ return String(s).replace(/[۰-۹]/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }); }
+  function findHolder(acct){
+    var d = toEnD(acct).replace(/\D/g, ''); if (d.length < 4 || d.length > 19) return null;
+    var tail = ('0000000000000000000' + d).slice(-19), list = [], best = null;
+    try { list = JSON.parse(localStorage.getItem('sheba-daftar-records') || '[]'); } catch (e) {}
+    if (!Array.isArray(list)) return null;
+    for (var n = 0; n < list.length; n++){
+      var r = list[n], sh = toEnD(r && r.sheba ? r.sheba : '').replace(/[\s\u200c\u200f\u200e\-_.]/g, '').toUpperCase();
+      if (/^\d{24}$/.test(sh)) sh = 'IR' + sh;
+      if (!/^IR\d{24}$/.test(sh) || sh.slice(7) !== tail) continue;
+      var nm = String(r.name || '').trim(); if (!nm) continue;
+      if (sh.slice(4, 7) === '016') return nm;   /* بانک کشاورزی اولویت دارد */
+      if (!best) best = nm;
+    }
+    return best;
+  }
+  function visIdx(i, dir){
+    var trs = $('ldBody').rows; i += dir;
+    while (i >= 0 && i < st.rows.length){ if (!trs[i] || !trs[i].classList.contains('ldhide')) return i; i += dir; }
+    return -1;
+  }
   $('ldBody').addEventListener('keydown', function(e){
-    if (e.key !== 'Enter' || e.shiftKey) return;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey){
+      var kk = String(e.key).toLowerCase();
+      if (kk === 'z' && !e.shiftKey){ e.preventDefault(); undo(); return; }
+      if (kk === 'y' || (kk === 'z' && e.shiftKey)){ e.preventDefault(); redo(); return; }
+    }
     var t = e.target, k = t && t.getAttribute && t.getAttribute('data-k');
     if (k == null) return;
-    e.preventDefault();
     var i = +t.getAttribute('data-i');
-    /* اینتر: رفتن به همان ستون در ردیف بعدی؛ در آخرین ردیف، ردیف جدید ساخته می‌شود و مکان‌نما در همان ستون می‌ماند */
-    if (i < st.rows.length - 1){ focusLdCell(i + 1, k); return; }
-    var nr = blank(); nr.invoice = loadNextInvoice(loadLastInvoice(st.rows, i));
-    st.rows.push(nr); save(); render(); focusLdCell(i + 1, k);
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !e.altKey && !e.shiftKey){
+      var j = visIdx(i, e.key === 'ArrowDown' ? 1 : -1);
+      if (j >= 0){ e.preventDefault(); focusLdCell(j, k); }
+      return;
+    }
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    /* اینتر در ستون «حساب»: اگر صاحب حساب خالی است، از دفتر شبا پر می‌شود */
+    var cur = st.rows[i];
+    if (k === 'account' && cur && String(cur.account || '').trim() && !String(cur.holder || '').trim()){
+      var hn = findHolder(cur.account);
+      if (hn){ cur.holder = hn; save(); render(); API.toast('صاحب حساب از دفتر شبا: ' + hn); }
+      else API.toast('این حساب در دفتر شبا پیدا نشد.');
+    }
+    /* اینتر: همان ستون در ردیف بعدی؛ در آخرین ردیف، ردیف جدید ساخته می‌شود */
+    var nx = visIdx(i, 1);
+    if (nx >= 0){ focusLdCell(nx, k); return; }
+    var nr = blank(); nr.invoice = loadNextInvoice(loadLastInvoice(st.rows, st.rows.length - 1));
+    clearFilter(); st.rows.push(nr); save(); render(); focusLdCell(st.rows.length - 1, k);
+  });
+  var FULLK = ['invoice', 'date', 'driver', 'barrels', 'liters', null, null, null, 'fee', null, 'account', 'holder', 'car'];
+  var EDITK = ['invoice', 'date', 'driver', 'barrels', 'liters', 'fee', 'account', 'holder', 'car'];
+  $('ldBody').addEventListener('paste', function(e){
+    var t = e.target, k = t && t.getAttribute && t.getAttribute('data-k'); if (k == null) return;
+    var txt = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\r/g, '').replace(/\n+$/, '');
+    if (txt.indexOf('\t') < 0 && txt.indexOf('\n') < 0) return;
+    e.preventDefault(); commitHist();
+    var grid = txt.split('\n').map(function(l){ return l.split('\t'); });
+    var i0 = +t.getAttribute('data-i');
+    grid.forEach(function(cells, ri){
+      var ri2 = i0 + ri;
+      while (st.rows.length <= ri2){ var nr = blank(); nr.invoice = loadNextInvoice(loadLastInvoice(st.rows, st.rows.length - 1)); st.rows.push(nr); }
+      var fp = FULLK.indexOf(k), full = fp >= 0 && cells.length >= FULLK.length - fp;
+      var keys = full ? FULLK : EDITK, p0 = keys.indexOf(k);
+      cells.forEach(function(v, ci){ var kk = keys[p0 + ci]; if (kk) st.rows[ri2][kk] = String(v).trim(); });
+    });
+    clearFilter(); save(); render(); focusLdCell(i0, k); API.toast('ردیف‌ها از اکسل چسبانده شد');
   });
 
   /* ---- کشیدن مثل اکسل (Fill Handle): مقدار سلول تا ردیف‌های پایین کپی می‌شود ---- */
@@ -3352,6 +3475,148 @@ if ('serviceWorker' in navigator) {
     num.textContent=saved||mk();
     if(!saved)try{localStorage.setItem('sj_iban_deco',num.textContent);}catch(e){}
   }
+})();
+</script>
+<script>
+(function(){
+  var D = document;
+  function $(i){ return D.getElementById(i); }
+  function lsGet(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v){ try { localStorage.setItem(k, v); } catch (e) {} }
+  function toEn(s){ return String(s).replace(/[۰-۹]/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }); }
+  function fa(n){ return String(n).replace(/\d/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'.charAt(d); }); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
+  function num(v){ var x = parseFloat(toEn(v).replace(/[,٬\s]/g, '')); return isNaN(x) ? 0 : x; }
+  var SKIP = {sj_license: 1, sj_device: 1, sj_devck: 1, sj_cfg: 1, sj_theme: 1, sj_iban_deco: 1, sj_backup_ts: 1};
+  function collect(){
+    var o = {};
+    try { for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (k && !SKIP[k] && /^(sj_|sheba-|bar_|kharid-)/.test(k)) o[k] = localStorage.getItem(k); } } catch (e) {}
+    return o;
+  }
+
+  /* ---------- نام‌های دفتر شبا برای پیشنهاد هنگام تایپ ---------- */
+  function names(){
+    var dl = $('ldNames'); if (!dl){ dl = D.createElement('datalist'); dl.id = 'ldNames'; D.body.appendChild(dl); }
+    try {
+      var list = JSON.parse(lsGet('sheba-daftar-records') || '[]'), seen = {}, out = '', n = 0;
+      (Array.isArray(list) ? list : []).forEach(function(r){ var nm = r && r.name ? String(r.name).trim() : ''; if (nm && !seen[nm] && n < 500){ seen[nm] = 1; n++; out += '<option value="' + esc(nm) + '">'; } });
+      dl.innerHTML = out;
+    } catch (e) {}
+  }
+
+  /* ---------- تشخیص بانک از روی شبا ---------- */
+  var BANKS = {'010': 'بانک مرکزی', '011': 'صنعت و معدن', '012': 'بانک ملت', '013': 'بانک رفاه', '014': 'بانک مسکن', '015': 'بانک سپه', '016': 'بانک کشاورزی', '017': 'بانک ملی', '018': 'بانک تجارت', '019': 'بانک صادرات', '020': 'توسعه صادرات', '021': 'پست بانک', '022': 'توسعه تعاون', '051': 'موسسه توسعه', '052': 'بانک قوامین', '053': 'بانک کارآفرین', '054': 'بانک پارسیان', '055': 'اقتصاد نوین', '056': 'بانک سامان', '057': 'بانک پاسارگاد', '058': 'بانک سرمایه', '059': 'بانک سینا', '060': 'بانک مهر ایران', '061': 'بانک شهر', '062': 'بانک آینده', '063': 'بانک انصار', '064': 'بانک گردشگری', '065': 'بانک حکمت', '066': 'بانک دی', '069': 'بانک ایران‌زمین', '070': 'بانک رسالت', '073': 'موسسه کوثر', '075': 'موسسه ملل', '078': 'بانک خاورمیانه'};
+  function ibanOk(s){
+    var t = s.slice(4) + s.slice(0, 4), rem = 0, i, c;
+    for (i = 0; i < t.length; i++){ c = t.charCodeAt(i); var v = c >= 65 && c <= 90 ? String(c - 55) : t.charAt(i); for (var j = 0; j < v.length; j++) rem = (rem * 10 + (v.charCodeAt(j) - 48)) % 97; }
+    return rem === 1;
+  }
+  function badge(el){
+    if (el.hasAttribute('data-bank') || el.children.length) return;
+    var raw = toEn(el.textContent).replace(/\s+/g, '').toUpperCase();
+    if (!/^IR\d{24}$/.test(raw)) return;
+    var ok = ibanOk(raw), nm = BANKS[raw.slice(4, 7)] || '';
+    if (ok && !nm) return;
+    el.setAttribute('data-bank', (ok ? '' : '⚠ شبا نامعتبر ') + nm);
+    if (!ok) el.classList.add('bk-bad');
+  }
+  function scan(root){
+    if (!root || root.nodeType !== 1 || root.closest && root.closest('#ldBody')) return;
+    if (/^(TD|SPAN|B|LI|DIV)$/.test(root.tagName)) badge(root);
+    var q = root.querySelectorAll ? root.querySelectorAll('td,span,b,li') : [];
+    for (var i = 0; i < q.length; i++) badge(q[i]);
+  }
+  if (window.MutationObserver){
+    var pend = [], raf = 0;
+    new MutationObserver(function(ms){
+      ms.forEach(function(m){ for (var i = 0; i < m.addedNodes.length; i++) if (m.addedNodes[i].nodeType === 1) pend.push(m.addedNodes[i]); });
+      if (!raf) raf = requestAnimationFrame(function(){ raf = 0; var p = pend; pend = []; p.slice(0, 200).forEach(scan); });
+    }).observe(D.body, {childList: true, subtree: true});
+  }
+
+  /* ---------- داشبورد ---------- */
+  function dash(){
+    var host = D.querySelector('.mcard-wrap'); if (!host) return;
+    var box = $('dash');
+    if (!box){ box = D.createElement('div'); box.className = 'dash'; box.id = 'dash'; host.parentNode.insertBefore(box, host.nextSibling); }
+    var rows = [], daftar = 0, size = 0;
+    try { var l = JSON.parse(lsGet('sj_load') || '{}'); rows = Array.isArray(l.rows) ? l.rows : []; } catch (e) {}
+    try { var d = JSON.parse(lsGet('sheba-daftar-records') || '[]'); daftar = Array.isArray(d) ? d.length : 0; } catch (e) {}
+    var all = collect(); Object.keys(all).forEach(function(k){ size += (all[k] || '').length * 2; });
+    var bk = +lsGet('sj_backup_ts') || 0;
+    var months = {};
+    rows.forEach(function(r){ var m = toEn(r.date || '').slice(0, 7); if (!/^\d{4}\/\d{2}$/.test(m)) return; var o = months[m] || (months[m] = {n: 0, b: 0, l: 0}); o.n++; o.b += num(r.barrels); o.l += num(r.liters); });
+    var keys = Object.keys(months).sort().slice(-6).reverse(), max = 0;
+    keys.forEach(function(k){ max = Math.max(max, months[k].b); });
+    var rep = keys.length ? keys.map(function(k){ var o = months[k]; return '<div class="rep-row"><span>' + fa(k) + '</span><div class="rep-bar"><i style="width:' + (max ? Math.max(4, Math.round(o.b / max * 100)) : 4) + '%"></i></div><span>' + fa(o.n) + ' ردیف · ' + fa(Math.round(o.b * 100) / 100) + ' بشکه</span></div>'; }).join('') : '<div class="rep-row"><span style="grid-column:1/-1;color:var(--muted)">هنوز ردیفی در لیست بار نیست.</span></div>';
+    box.innerHTML = '<h3>خلاصه‌ی اطلاعات شما</h3><div class="dsh-grid"><div><b>' + fa(rows.length) + '</b><span>ردیف لیست بار</span></div><div><b>' + fa(daftar) + '</b><span>شبای دفتر</span></div><div><b>' + fa(Math.max(1, Math.round(size / 1024))) + '</b><span>کیلوبایت داده</span></div><div><b style="font-size:14px">' + (bk ? new Date(bk).toLocaleDateString('fa-IR') : '—') + '</b><span>آخرین پشتیبان</span></div></div><div class="dsh-rep"><h4>گزارش ماهانه‌ی لیست بار (جمع بشکه)</h4>' + rep + '</div>';
+  }
+
+  /* ---------- پشتیبان‌گیری ---------- */
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function msg(t, bad){ var m = $('bkMsg'); if (m){ m.textContent = t; m.className = 'msg' + (bad ? ' bad' : ' good'); } }
+  function payload(){ return {app: 'shabajam', v: 1, at: new Date().toISOString(), keys: collect()}; }
+  function applyBackup(data){
+    if (!data || data.app !== 'shabajam' || !data.keys || typeof data.keys !== 'object') throw new Error('bad');
+    var ks = Object.keys(data.keys).filter(function(k){ return /^(sj_|sheba-|bar_|kharid-)/.test(k) && !SKIP[k]; });
+    if (!ks.length) throw new Error('empty');
+    if (!confirm('اطلاعات فعلی این دستگاه با پشتیبان جایگزین می‌شود. ادامه می‌دهی؟')) return false;
+    /* تا بارگذاری دوباره، هیچ بخشی (حتی ابزارهای داخلی) نباید اطلاعات قدیمی را روی بازیابی بنویسد */
+    var frozen = {}; ks.forEach(function(k){ frozen[k] = 1; });
+    var raw = Storage.prototype.setItem;
+    function guard(w){ try { var P = w.Storage.prototype, o = P.setItem; P.setItem = function(k, v){ if (frozen[k]) return; return o.apply(this, arguments); }; } catch (e) {} }
+    guard(window); Array.prototype.forEach.call(D.querySelectorAll('iframe'), function(f){ try { guard(f.contentWindow); } catch (e) {} });
+    ks.forEach(function(k){ raw.call(localStorage, k, String(data.keys[k])); });
+    msg('بازیابی شد. صفحه دوباره بارگذاری می‌شود...'); setTimeout(function(){ location.reload(); }, 300);
+    return true;
+  }
+  function exportFile(){
+    var d = new Date(), blob = new Blob([JSON.stringify(payload())], {type: 'application/json'}), a = D.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'shabajam-backup-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '.json';
+    D.body.appendChild(a); a.click(); setTimeout(function(){ try { URL.revokeObjectURL(a.href); a.remove(); } catch (e) {} }, 4000);
+    lsSet('sj_backup_ts', String(Date.now())); msg('پشتیبان آماده شد.'); dash();
+  }
+  function cloudReady(){ return !!(window.SJ_APIPOST && window.SJ_TGDATA && window.SJ_TGDATA() && window.CONFIG && CONFIG.api); }
+  function card(){
+    if ($('bkCard')) return;
+    var anchor = $('actMsgAcc'); if (!anchor) return;
+    var host = anchor.closest('.card') || anchor.parentNode;
+    var c = D.createElement('div'); c.className = 'card'; c.id = 'bkCard';
+    c.innerHTML = '<h3>پشتیبان‌گیری از اطلاعات</h3><p>همه‌ی اطلاعات ابزارها (لیست بار، دفتر شبا، حساب بار قایق، خرید لنج و ...) فقط روی همین دستگاه ذخیره می‌شود. با پشتیبان می‌توانی آن را به دستگاه دیگر ببری.</p>' +
+      '<div class="bkrow"><button type="button" class="btn-line" id="bkExp">دریافت پشتیبان</button><label class="btn-line" style="cursor:pointer">بازیابی از فایل<input type="file" id="bkImp" accept=".json,application/json" hidden></label></div>' +
+      '<div class="bkrow" id="bkCloud" hidden><button type="button" class="btn-line" id="bkUp">ذخیره در ابر ربات</button><button type="button" class="btn-line" id="bkDown">بازیابی از ابر ربات</button></div>' +
+      '<p id="bkCloudNote" hidden style="font-size:12.5px">فقط وقتی «ذخیره در ابر ربات» را بزنی، یک نسخه از اطلاعات روی سرور ربات نگه‌داری می‌شود.</p><div class="msg" id="bkMsg" role="status"></div>';
+    host.parentNode.insertBefore(c, host.nextSibling);
+    $('bkExp').addEventListener('click', exportFile);
+    $('bkImp').addEventListener('change', function(e){
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function(){ try { applyBackup(JSON.parse(String(fr.result))); } catch (x) { msg('این فایل پشتیبان معتبر نیست.', true); } e.target.value = ''; };
+      fr.readAsText(f);
+    });
+    $('bkUp').addEventListener('click', async function(){
+      if (!cloudReady()) return msg('برای این کار اپ را از دکمه‌ی منوی ربات باز کن.', true);
+      var r = await window.SJ_APIPOST('/miniapp/backup', {initData: window.SJ_TGDATA(), data: JSON.stringify(payload())});
+      if (r && r.ok){ lsSet('sj_backup_ts', String(Date.now())); msg('در ابر ربات ذخیره شد.'); dash(); }
+      else msg(r && r.error === 'big' ? 'حجم اطلاعات زیاد است.' : (r && r.error === 'rate' ? 'کمی صبر کن و دوباره بزن.' : 'ذخیره نشد. دوباره امتحان کن.'), true);
+    });
+    $('bkDown').addEventListener('click', async function(){
+      if (!cloudReady()) return msg('برای این کار اپ را از دکمه‌ی منوی ربات باز کن.', true);
+      var r = await window.SJ_APIPOST('/miniapp/restore', {initData: window.SJ_TGDATA()});
+      if (!r || !r.ok) return msg('بازیابی نشد. دوباره امتحان کن.', true);
+      if (r.none) return msg('هنوز پشتیبانی در ابر ذخیره نکرده‌ای.', true);
+      try { applyBackup(JSON.parse(r.data)); } catch (x) { msg('پشتیبان ابری معتبر نیست.', true); }
+    });
+    showCloud();
+  }
+  function showCloud(){ var ok = cloudReady(), a = $('bkCloud'), b = $('bkCloudNote'); if (a) a.hidden = !ok; if (b) b.hidden = !ok; }
+
+  function init(){ names(); dash(); card(); scan(D.body); }
+  var tries = 0, iv = setInterval(function(){ showCloud(); if (++tries > 12) clearInterval(iv); }, 1000);
+  window.addEventListener('hashchange', function(){ names(); dash(); card(); });
+  D.addEventListener('visibilitychange', function(){ if (!D.hidden){ names(); dash(); showCloud(); } });
+  window.addEventListener('storage', function(){ names(); dash(); });
+  if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
 </body>
