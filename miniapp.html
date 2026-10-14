@@ -1137,6 +1137,34 @@ main{padding-bottom:calc(var(--nav-h) + 48px + env(safe-area-inset-bottom,0px))}
 #bkCard h3{margin:0 0 6px; font-size:16px}
 #bkCard p{margin:0 0 12px; color:var(--muted); font-size:14px}
 #bkCard .bkrow{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px}
+
+/* ==== v6: lists, driver statements, sorting, snapshots, search, settings ==== */
+.ldlists{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 10px; padding:10px; border:1px solid var(--line); border-radius:14px; background:var(--surface)}
+.ldlists select{min-width:170px; flex:1}
+.ldlists input{flex:1; min-width:130px}
+.ldlists button{padding:8px 12px}
+.ldt th.sortable{cursor:pointer; user-select:none}
+.ldt th.sortable:hover{color:var(--accent)}
+.ldt th.sort-asc::after{content:" ▲"; font-size:10px}
+.ldt th.sort-desc::after{content:" ▼"; font-size:10px}
+.ldstmt{margin-top:12px; overflow-x:auto}
+.ldstmt table{width:100%; border-collapse:collapse; font-size:13.5px}
+.ldstmt th,.ldstmt td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:start; white-space:nowrap}
+.ldstmt tfoot td{font-weight:700; border-bottom:0}
+.ldstmt button{padding:5px 10px; font-size:12.5px}
+.dsh-lists{margin-top:10px; font-size:12.5px; color:var(--muted)}
+#cmdk{position:fixed; inset:0; z-index:300; background:rgba(8,14,30,.55); display:flex; align-items:flex-start; justify-content:center; padding:12vh 14px 0}
+#cmdk[hidden]{display:none}
+#cmdk .cmdk-box{width:100%; max-width:560px; background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:0 30px 80px rgba(0,0,0,.35); overflow:hidden}
+#cmdk input{width:100%; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:16px 18px; font-size:16px; background:transparent; color:var(--ink); outline:none}
+#cmdk ul{list-style:none; margin:0; padding:6px; max-height:52vh; overflow:auto}
+#cmdk li{display:flex; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14.5px; color:var(--ink)}
+#cmdk li small{color:var(--muted); font-size:12px; white-space:nowrap}
+#cmdk li.on,#cmdk li:hover{background:var(--accent-soft); color:var(--accent)}
+#cmdk .cmdk-empty{padding:18px; text-align:center; color:var(--muted); font-size:14px}
+#setCard{margin-top:16px}
+#setCard h3{margin:0 0 8px; font-size:16px}
+#setCard .bkrow label.f{display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); flex:1; min-width:140px}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1549,6 +1577,7 @@ main{padding-bottom:calc(var(--nav-h) + 48px + env(safe-area-inset-bottom,0px))}
         </section>
         <section>
           <div class="stats" id="ldStats"></div>
+          <div class="ldlists" id="ldListBar"><select id="ldList" aria-label="لیست‌ها"></select><input type="text" id="ldListName" placeholder="نام لیست" autocomplete="off"><button type="button" id="ldListNew">لیست جدید</button><button type="button" id="ldListCopy">کپی لیست</button><button type="button" id="ldListRen">تغییر نام</button><button type="button" id="ldListDel">حذف لیست</button></div>
           <div class="ldbar"><input type="text" id="ldFilter" placeholder="جستجو در ردیف‌ها (راننده، حساب، فاکتور...)" autocomplete="off"><button type="button" id="ldUndo" title="Ctrl+Z" disabled>برگشت</button><button type="button" id="ldRedo" title="Ctrl+Y" disabled>تکرار</button></div>
           <div class="ldwrap">
             <table class="ldt">
@@ -1556,10 +1585,12 @@ main{padding-bottom:calc(var(--nav-h) + 48px + env(safe-area-inset-bottom,0px))}
               <tbody id="ldBody"></tbody>
             </table>
           </div>
+          <div class="ldstmt" id="ldStmtBox" hidden></div>
           <label class="chk" style="margin-top:10px"><input type="checkbox" id="ldTotal"><span>ردیف جمع کل در اکسل هم باشد</span></label>
           <div class="actions" style="margin-top:6px">
             <button type="button" class="primary dl" id="ldDl">دانلود اکسل مثل فایل لیست</button>
             <button type="button" id="ldCopy">کپی جدول</button>
+            <button type="button" id="ldStmt">صورت‌حساب رانندگان</button>
           </div>
           <div class="actions" style="margin-top:6px">
             <button type="button" id="ldPdf">دانلود PDF</button>
@@ -3609,7 +3640,7 @@ function buildLoadXlsx(rows, per, opts, type){
       frag.appendChild(tr);
     });
     body.appendChild(frag);
-    totals(); refresh(); applyFilter(); attachNames();
+    totals(); refresh(); applyFilter(); attachNames(); drawLists();
     if (focusLast){ var fk = (typeof focusLast === 'string') ? focusLast : 'driver'; var ins = body.querySelectorAll('tr:last-child input[data-k="' + fk + '"]'); if (ins[0]) ins[0].focus(); }
   }
   $('ldBody').addEventListener('input', function(e){
@@ -3664,6 +3695,151 @@ function buildLoadXlsx(rows, per, opts, type){
   if ($('ldFilter')) $('ldFilter').addEventListener('input', applyFilter);
   if ($('ldUndo')) $('ldUndo').addEventListener('click', undo);
   if ($('ldRedo')) $('ldRedo').addEventListener('click', redo);
+  /* ---- چند لیست بار (دوره‌ها): لیست فعال همیشه در sj_load است و بقیه در sj_load_<id> ---- */
+  function prefOn(n){ try { var p = JSON.parse(lsGet('sj_prefs') || '{}'); return !p || p[n] !== false; } catch (e) { return true; } }
+  function prefVal(n){ try { var p = JSON.parse(lsGet('sj_prefs') || '{}'); return p && p[n] ? String(p[n]) : ''; } catch (e) { return ''; } }
+  function regGet(){
+    var r = null; try { r = JSON.parse(lsGet('sj_lists') || 'null'); } catch (e) {}
+    if (!r || !Array.isArray(r.ids) || !r.ids.length) r = {active: 'main', ids: ['main'], names: {main: 'لیست اصلی'}};
+    if (!r.names) r.names = {};
+    return r;
+  }
+  function regSet(r){ lsSet('sj_lists', JSON.stringify(r)); }
+  function listKey(id){ return 'sj_load_' + id; }
+  function curState(){ return JSON.stringify({rows: st.rows, fee: $('ldFee').value, per: $('ldPer').value}); }
+  function flushNow(){ clearTimeout(timer); lsSet(KEY, curState()); lsSet(KEY + '-ts', String(Date.now())); }
+  function applyState(data){
+    st.rows = Array.isArray(data.rows) ? data.rows : [];
+    st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; });
+    if (data.fee) $('ldFee').value = data.fee;
+    if (data.per) $('ldPer').value = data.per;
+    st.fee = $('ldFee').value.trim();
+    render();
+  }
+  function resetHist(){ clearTimeout(histT); histT = null; hist = [JSON.stringify(st.rows)]; hpos = 0; histBtns(); }
+  function countOf(id){ try { var d = JSON.parse(lsGet(listKey(id)) || '{}'); return Array.isArray(d.rows) ? d.rows.length : 0; } catch (e) { return 0; } }
+  function drawLists(){
+    var sel = $('ldList'); if (!sel) return;
+    var r = regGet();
+    sel.innerHTML = r.ids.map(function(id){
+      var n = id === r.active ? st.rows.length : countOf(id);
+      return '<option value="' + esc(id) + '"' + (id === r.active ? ' selected' : '') + '>' + esc(r.names[id] || id) + ' (' + fa(n) + ' ردیف)</option>';
+    }).join('');
+  }
+  function switchList(id){
+    var r = regGet(); if (id === r.active || r.ids.indexOf(id) < 0) return;
+    flushNow(); lsSet(listKey(r.active), lsGet(KEY));
+    var data = null; try { data = JSON.parse(lsGet(listKey(id)) || 'null'); } catch (e) {}
+    data = data || {rows: [], fee: $('ldFee').value, per: $('ldPer').value};
+    lsSet(KEY, JSON.stringify(data)); lsSet(KEY + '-ts', String(Date.now()));
+    r.active = id; regSet(r);
+    applyState(data); resetHist();
+  }
+  function createList(name, copy){
+    var r = regGet(); flushNow(); lsSet(listKey(r.active), lsGet(KEY));
+    var id = 'l' + Date.now().toString(36) + Math.floor(Math.random() * 99);
+    var data = copy ? JSON.parse(lsGet(KEY)) : {rows: [], fee: prefVal('defFee') || $('ldFee').value, per: prefVal('defPer') || $('ldPer').value};
+    r.ids.push(id); r.names[id] = name; lsSet(listKey(id), JSON.stringify(data)); regSet(r);
+    switchList(id);
+  }
+  function deleteList(){
+    var r = regGet(); if (r.ids.length < 2) return API.toast('حداقل یک لیست باید بماند.');
+    var gone = r.active; r.ids = r.ids.filter(function(x){ return x !== gone; }); delete r.names[gone]; lsSet(listKey(gone), null);
+    var next = r.ids[0], data = {rows: []}; try { data = JSON.parse(lsGet(listKey(next)) || '{"rows":[]}'); } catch (e) {}
+    r.active = next; regSet(r); lsSet(KEY, JSON.stringify(data)); lsSet(KEY + '-ts', String(Date.now()));
+    applyState(data); resetHist();
+  }
+  function nameVal(def){ var el = $('ldListName'), v = el ? el.value.trim() : ''; if (el) el.value = ''; return v || def; }
+  if ($('ldList')) $('ldList').addEventListener('change', function(){ switchList(this.value); });
+  if ($('ldListNew')) $('ldListNew').addEventListener('click', function(){ var r = regGet(); createList(nameVal('لیست ' + fa(r.ids.length + 1)), false); API.toast('لیست جدید ساخته شد'); });
+  if ($('ldListCopy')) $('ldListCopy').addEventListener('click', function(){ var r = regGet(); createList(nameVal((r.names[r.active] || 'لیست') + ' (کپی)'), true); API.toast('کپی لیست ساخته شد'); });
+  if ($('ldListRen')) $('ldListRen').addEventListener('click', function(){
+    var v = ($('ldListName').value || '').trim(); if (!v) return API.toast('اول نام تازه را بنویس.');
+    var r = regGet(); r.names[r.active] = v; regSet(r); $('ldListName').value = ''; drawLists(); API.toast('نام لیست عوض شد');
+  });
+  if ($('ldListDel')) $('ldListDel').addEventListener('click', function(){
+    var r = regGet(); if (r.ids.length < 2) return API.toast('حداقل یک لیست باید بماند.');
+    window.SJ_ASK('لیست «' + (r.names[r.active] || '') + '» و همه‌ی ردیف‌هایش پاک شود؟', function(){ deleteList(); API.toast('لیست حذف شد'); });
+  });
+  window.SJ_LD = {
+    switchTo: function(id){ switchList(id); },
+    setFilter: function(t){ var f = $('ldFilter'); if (f){ f.value = t; applyFilter(); } }
+  };
+
+  /* ---- مرتب‌سازی با کلیک روی عنوان ستون ---- */
+  var SORTK = {1: 'invoice', 2: 'date', 3: 'driver', 4: 'barrels', 5: 'liters', 9: 'fee', 10: 'J', 11: 'account', 12: 'holder', 13: 'car'};
+  var sortState = {k: null, dir: 1};
+  function sortHeaders(){
+    var ths = document.querySelectorAll('.ldt thead th');
+    Array.prototype.forEach.call(ths, function(th, n){ if (SORTK[n]){ th.setAttribute('data-sort', SORTK[n]); th.classList.add('sortable'); th.title = 'مرتب‌سازی'; } });
+  }
+  function sortKey(r, k){
+    if (k === 'J') return loadCalc(r, per()).J;
+    var v = r[k];
+    if (NUMK[k] || k === 'invoice'){ var x = parseAmount(v); return isNaN(x) ? null : x; }
+    v = String(v == null ? '' : v).trim(); return v === '' ? null : v;
+  }
+  function sortRows(k){
+    commitHist();
+    sortState.dir = sortState.k === k ? -sortState.dir : 1; sortState.k = k;
+    var d = sortState.dir;
+    var arr = st.rows.map(function(r, i){ return {r: r, i: i, v: sortKey(r, k)}; });
+    arr.sort(function(a, b){
+      var A = a.v, B = b.v;
+      if (A == null && B == null) return a.i - b.i; if (A == null) return 1; if (B == null) return -1;
+      var c = (typeof A === 'number' && typeof B === 'number') ? A - B : String(A).localeCompare(String(B), 'fa');
+      return c ? c * d : a.i - b.i;
+    });
+    st.rows = arr.map(function(x){ return x.r; });
+    save(); render();
+    Array.prototype.forEach.call(document.querySelectorAll('.ldt thead th'), function(th){
+      th.classList.remove('sort-asc', 'sort-desc');
+      if (th.getAttribute('data-sort') === k) th.classList.add(d > 0 ? 'sort-asc' : 'sort-desc');
+    });
+  }
+  (function(){ var h = document.querySelector('.ldt thead'); if (h) h.addEventListener('click', function(e){ var th = e.target.closest && e.target.closest('th[data-sort]'); if (th) sortRows(th.getAttribute('data-sort')); }); })();
+
+  /* ---- صورت‌حساب هر راننده ---- */
+  function drivers(){
+    var map = {}, order = [];
+    st.rows.forEach(function(r){
+      var c = loadCalc(r, per()); if (c.bad) return;
+      var name = String(r.driver || '').trim() || 'بدون نام';
+      if (!map[name]){ map[name] = {name: name, n: 0, D: 0, G: 0, J: 0, rows: []}; order.push(name); }
+      var o = map[name]; o.n++; o.D += c.D; o.G += c.G; o.J += c.J; o.rows.push({r: r, c: c});
+    });
+    return order.map(function(n){ return map[n]; });
+  }
+  function stmtText(o){
+    var reg = regGet(), title = reg.names[reg.active] || 'لیست بار';
+    var lines = ['صورت‌حساب ' + o.name, 'لیست: ' + title, ''];
+    o.rows.forEach(function(x, i){
+      lines.push((i + 1) + ') ' + (x.r.invoice ? 'فاکتور ' + x.r.invoice + ' · ' : '') + (x.r.date ? x.r.date + ' · ' : '') + fmt(x.c.D, 3) + ' بشکه · ' + fmt(x.c.J / 10, 0) + ' تومان');
+    });
+    lines.push('', 'جمع: ' + o.n + ' ردیف · ' + fmt(o.D, 3) + ' بشکه · ' + fmt(o.G, 3) + ' لیتر', 'مبلغ کل: ' + fmt(o.J / 10, 0) + ' تومان');
+    return fa(lines.join('\n'));
+  }
+  function renderStmt(){
+    var box = $('ldStmtBox'); if (!box) return;
+    var ds = drivers();
+    if (!ds.length){ box.innerHTML = '<p style="color:var(--muted)">ردیف معتبری برای صورت‌حساب نیست.</p>'; box._ds = []; return; }
+    var T = {n: 0, D: 0, G: 0, J: 0}; ds.forEach(function(o){ T.n += o.n; T.D += o.D; T.G += o.G; T.J += o.J; });
+    box._ds = ds;
+    box.innerHTML = '<table><thead><tr><th>راننده</th><th>ردیف</th><th>بشکه</th><th>لیتر</th><th>مبلغ (تومان)</th><th></th></tr></thead><tbody>' +
+      ds.map(function(o, i){ return '<tr><td>' + esc(o.name) + '</td><td>' + fa(o.n) + '</td><td>' + fa(fmt(o.D, 3)) + '</td><td>' + fa(fmt(o.G, 3)) + '</td><td>' + fa(fmt(o.J / 10, 0)) + '</td><td><button type="button" data-wa="' + i + '">واتساپ</button> <button type="button" data-cp="' + i + '">کپی</button></td></tr>'; }).join('') +
+      '</tbody><tfoot><tr><td>جمع کل</td><td>' + fa(T.n) + '</td><td>' + fa(fmt(T.D, 3)) + '</td><td>' + fa(fmt(T.G, 3)) + '</td><td>' + fa(fmt(T.J / 10, 0)) + '</td><td></td></tr></tfoot></table>';
+  }
+  if ($('ldStmt')) $('ldStmt').addEventListener('click', function(){ var b = $('ldStmtBox'); b.hidden = !b.hidden; if (!b.hidden) renderStmt(); });
+  if ($('ldStmtBox')) $('ldStmtBox').addEventListener('click', function(e){
+    var wa = e.target.closest && e.target.closest('[data-wa]'), cp = e.target.closest && e.target.closest('[data-cp]'), box = $('ldStmtBox');
+    if (!wa && !cp) return;
+    var o = (box._ds || [])[+(wa || cp).getAttribute(wa ? 'data-wa' : 'data-cp')]; if (!o) return;
+    var txt = stmtText(o);
+    if (cp){ API.copyText(txt); API.toast('متن صورت‌حساب کپی شد'); return; }
+    var url = 'https://wa.me/?text=' + encodeURIComponent(txt);
+    if (window.SJ_TG && window.SJ_TG.open) window.SJ_TG.open(url); else window.open(url, '_blank', 'noopener');
+  });
+
   /* ---- نام صاحب حساب از دفتر شبا: شماره حساب = ۱۹ رقم آخر شبا (مثل ابزار تبدیل) ---- */
   function toEnD(s){ return String(s).replace(/[۰-۹]/g, function(d){ return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); }).replace(/[٠-٩]/g, function(d){ return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }); }
   function findHolder(acct){
@@ -3704,7 +3880,7 @@ function buildLoadXlsx(rows, per, opts, type){
     e.preventDefault();
     /* اینتر در ستون «حساب»: اگر صاحب حساب خالی است، از دفتر شبا پر می‌شود */
     var cur = st.rows[i];
-    if (k === 'account' && cur && String(cur.account || '').trim() && !String(cur.holder || '').trim()){
+    if (k === 'account' && prefOn('autoHolder') && cur && String(cur.account || '').trim() && !String(cur.holder || '').trim()){
       var hn = findHolder(cur.account);
       if (hn){ cur.holder = hn; save(); render(); API.toast('صاحب حساب از دفتر شبا: ' + hn); }
       else API.toast('این حساب در دفتر شبا پیدا نشد.');
@@ -3893,7 +4069,7 @@ function buildLoadXlsx(rows, per, opts, type){
     if (Array.isArray(saved.rows)) st.rows = saved.rows;
     st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; });
   }
-  render();
+  render(); sortHeaders(); drawLists();
 })();
 
 </script>
@@ -4312,13 +4488,14 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
   var SKIP = {sj_license: 1, sj_device: 1, sj_devck: 1, sj_cfg: 1, sj_theme: 1, sj_iban_deco: 1, sj_backup_ts: 1};
   function collect(){
     var o = {};
-    try { for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (k && !SKIP[k] && /^(sj_|sheba-|bar_|kharid-)/.test(k)) o[k] = localStorage.getItem(k); } } catch (e) {}
+    try { for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (k && !SKIP[k] && k.indexOf('sj_snap_') !== 0 && /^(sj_|sheba-|bar_|kharid-)/.test(k)) o[k] = localStorage.getItem(k); } } catch (e) {}
     return o;
   }
 
   /* ---------- نام‌های دفتر شبا برای پیشنهاد هنگام تایپ ---------- */
   function names(){
     var dl = $('ldNames'); if (!dl){ dl = D.createElement('datalist'); dl.id = 'ldNames'; D.body.appendChild(dl); }
+    if (!prefOn('names')){ dl.innerHTML = ''; return; }
     try {
       var list = JSON.parse(lsGet('sheba-daftar-records') || '[]'), seen = {}, out = '', n = 0;
       (Array.isArray(list) ? list : []).forEach(function(r){ var nm = r && r.name ? String(r.name).trim() : ''; if (nm && !seen[nm] && n < 500){ seen[nm] = 1; n++; out += '<option value="' + esc(nm) + '">'; } });
@@ -4334,6 +4511,7 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
     return rem === 1;
   }
   function badge(el){
+    if (!prefOn('bank')) return;
     if (el.hasAttribute('data-bank') || el.children.length) return;
     var raw = toEn(el.textContent).replace(/\s+/g, '').toUpperCase();
     if (!/^IR\d{24}$/.test(raw)) return;
@@ -4362,7 +4540,9 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
     var box = $('dash');
     if (!box){ box = D.createElement('div'); box.className = 'dash'; box.id = 'dash'; host.parentNode.insertBefore(box, host.nextSibling); }
     var rows = [], daftar = 0, size = 0;
-    try { var l = JSON.parse(lsGet('sj_load') || '{}'); rows = Array.isArray(l.rows) ? l.rows : []; } catch (e) {}
+    var reg = null; try { reg = JSON.parse(lsGet('sj_lists') || 'null'); } catch (e) {}
+    var ids = reg && Array.isArray(reg.ids) ? reg.ids : ['main'], act = (reg && reg.active) || 'main', listLines = [];
+    ids.forEach(function(id){ var rs = []; try { var l = JSON.parse((id === act ? lsGet('sj_load') : lsGet('sj_load_' + id)) || '{}'); rs = Array.isArray(l.rows) ? l.rows : []; } catch (e) {} rows = rows.concat(rs); listLines.push(((reg && reg.names && reg.names[id]) || 'لیست اصلی') + ' (' + fa(rs.length) + ')'); });
     try { var d = JSON.parse(lsGet('sheba-daftar-records') || '[]'); daftar = Array.isArray(d) ? d.length : 0; } catch (e) {}
     var all = collect(); Object.keys(all).forEach(function(k){ size += (all[k] || '').length * 2; });
     var bk = +lsGet('sj_backup_ts') || 0;
@@ -4371,26 +4551,34 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
     var keys = Object.keys(months).sort().slice(-6).reverse(), max = 0;
     keys.forEach(function(k){ max = Math.max(max, months[k].b); });
     var rep = keys.length ? keys.map(function(k){ var o = months[k]; return '<div class="rep-row"><span>' + fa(k) + '</span><div class="rep-bar"><i style="width:' + (max ? Math.max(4, Math.round(o.b / max * 100)) : 4) + '%"></i></div><span>' + fa(o.n) + ' ردیف · ' + fa(Math.round(o.b * 100) / 100) + ' بشکه</span></div>'; }).join('') : '<div class="rep-row"><span style="grid-column:1/-1;color:var(--muted)">هنوز ردیفی در لیست بار نیست.</span></div>';
-    box.innerHTML = '<h3>خلاصه‌ی اطلاعات شما</h3><div class="dsh-grid"><div><b>' + fa(rows.length) + '</b><span>ردیف لیست بار</span></div><div><b>' + fa(daftar) + '</b><span>شبای دفتر</span></div><div><b>' + fa(Math.max(1, Math.round(size / 1024))) + '</b><span>کیلوبایت داده</span></div><div><b style="font-size:14px">' + (bk ? new Date(bk).toLocaleDateString('fa-IR') : '—') + '</b><span>آخرین پشتیبان</span></div></div><div class="dsh-rep"><h4>گزارش ماهانه‌ی لیست بار (جمع بشکه)</h4>' + rep + '</div>';
+    box.innerHTML = '<h3>خلاصه‌ی اطلاعات شما <button type="button" id="dashSearch" class="btn-line" style="float:left;padding:3px 12px;font-size:12.5px">جستجو (Ctrl+K)</button></h3><div class="dsh-grid"><div><b>' + fa(rows.length) + '</b><span>ردیف لیست بار</span></div><div><b>' + fa(daftar) + '</b><span>شبای دفتر</span></div><div><b>' + fa(Math.max(1, Math.round(size / 1024))) + '</b><span>کیلوبایت داده</span></div><div><b style="font-size:14px">' + (bk ? new Date(bk).toLocaleDateString('fa-IR') : '—') + '</b><span>آخرین پشتیبان</span></div></div>' + (listLines.length > 1 ? '<div class="dsh-lists">لیست‌ها: ' + listLines.join(' · ') + '</div>' : '') + '<div class="dsh-rep"><h4>گزارش ماهانه‌ی لیست بار (جمع بشکه)</h4>' + rep + '</div>';
   }
 
   /* ---------- پشتیبان‌گیری ---------- */
   function pad(n){ return (n < 10 ? '0' : '') + n; }
   function msg(t, bad){ var m = $('bkMsg'); if (m){ m.textContent = t; m.className = 'msg' + (bad ? ' bad' : ' good'); } }
   function payload(){ return {app: 'shabajam', v: 1, at: new Date().toISOString(), keys: collect()}; }
+  window.SJ_ASK = function(text, cb){
+    try { var tg = window.Telegram && Telegram.WebApp; if (tg && tg.initData && tg.showConfirm && tg.isVersionAtLeast && tg.isVersionAtLeast('6.2')){ tg.showConfirm(text, function(ok){ if (ok) cb(); }); return; } } catch (e) {}
+    if (confirm(text)) cb();
+  };
+  function okKey(k){ return /^(sj_|sheba-|bar_|kharid-)/.test(k) && !SKIP[k] && k.indexOf('sj_snap_') !== 0; }
+  function applyKeys(keys, what){
+    var ks = Object.keys(keys).filter(okKey);
+    if (!ks.length) throw new Error('empty');
+    window.SJ_ASK('اطلاعات فعلی این دستگاه با ' + what + ' جایگزین می‌شود. ادامه می‌دهی؟', function(){
+      /* تا بارگذاری دوباره، هیچ بخشی (حتی ابزارهای داخلی) نباید اطلاعات قدیمی را روی بازیابی بنویسد */
+      var frozen = {}; ks.forEach(function(k){ frozen[k] = 1; });
+      var raw = Storage.prototype.setItem;
+      function guard(w){ try { var P = w.Storage.prototype, o = P.setItem; P.setItem = function(k, v){ if (frozen[k]) return; return o.apply(this, arguments); }; } catch (e) {} }
+      guard(window); Array.prototype.forEach.call(D.querySelectorAll('iframe'), function(f){ try { guard(f.contentWindow); } catch (e) {} });
+      ks.forEach(function(k){ raw.call(localStorage, k, String(keys[k])); });
+      msg('بازیابی شد. صفحه دوباره بارگذاری می‌شود...'); setTimeout(function(){ location.reload(); }, 300);
+    });
+  }
   function applyBackup(data){
     if (!data || data.app !== 'shabajam' || !data.keys || typeof data.keys !== 'object') throw new Error('bad');
-    var ks = Object.keys(data.keys).filter(function(k){ return /^(sj_|sheba-|bar_|kharid-)/.test(k) && !SKIP[k]; });
-    if (!ks.length) throw new Error('empty');
-    if (!confirm('اطلاعات فعلی این دستگاه با پشتیبان جایگزین می‌شود. ادامه می‌دهی؟')) return false;
-    /* تا بارگذاری دوباره، هیچ بخشی (حتی ابزارهای داخلی) نباید اطلاعات قدیمی را روی بازیابی بنویسد */
-    var frozen = {}; ks.forEach(function(k){ frozen[k] = 1; });
-    var raw = Storage.prototype.setItem;
-    function guard(w){ try { var P = w.Storage.prototype, o = P.setItem; P.setItem = function(k, v){ if (frozen[k]) return; return o.apply(this, arguments); }; } catch (e) {} }
-    guard(window); Array.prototype.forEach.call(D.querySelectorAll('iframe'), function(f){ try { guard(f.contentWindow); } catch (e) {} });
-    ks.forEach(function(k){ raw.call(localStorage, k, String(data.keys[k])); });
-    msg('بازیابی شد. صفحه دوباره بارگذاری می‌شود...'); setTimeout(function(){ location.reload(); }, 300);
-    return true;
+    applyKeys(data.keys, 'پشتیبان');
   }
   function exportFile(){
     var d = new Date(), blob = new Blob([JSON.stringify(payload())], {type: 'application/json'}), a = D.createElement('a');
@@ -4407,7 +4595,7 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
     c.innerHTML = '<h3>پشتیبان‌گیری از اطلاعات</h3><p>همه‌ی اطلاعات ابزارها (لیست بار، دفتر شبا، حساب بار قایق، خرید لنج و ...) فقط روی همین دستگاه ذخیره می‌شود. با پشتیبان می‌توانی آن را به دستگاه دیگر ببری.</p>' +
       '<div class="bkrow"><button type="button" class="btn-line" id="bkExp">دریافت پشتیبان</button><label class="btn-line" style="cursor:pointer">بازیابی از فایل<input type="file" id="bkImp" accept=".json,application/json" hidden></label></div>' +
       '<div class="bkrow" id="bkCloud" hidden><button type="button" class="btn-line" id="bkUp">ذخیره در ابر ربات</button><button type="button" class="btn-line" id="bkDown">بازیابی از ابر ربات</button></div>' +
-      '<p id="bkCloudNote" hidden style="font-size:12.5px">فقط وقتی «ذخیره در ابر ربات» را بزنی، یک نسخه از اطلاعات روی سرور ربات نگه‌داری می‌شود.</p><div class="msg" id="bkMsg" role="status"></div>';
+      '<p id="bkCloudNote" hidden style="font-size:12.5px">فقط وقتی «ذخیره در ابر ربات» را بزنی، یک نسخه از اطلاعات روی سرور ربات نگه‌داری می‌شود.</p>'+'<div class="bkrow" style="margin-top:6px"><select id="snapSel" style="flex:1;min-width:180px"></select><button type="button" class="btn-line" id="snapRestore">برگرداندن نسخه‌ی انتخابی</button><button type="button" class="btn-line" id="snapNow">نسخه‌ی تازه</button></div><p style="font-size:12.5px">هر روز یک نسخه‌ی خودکار از لیست‌های بار روی همین دستگاه نگه‌داری می‌شود (آخرین ۱۴ نسخه).</p>'+'<div class="msg" id="bkMsg" role="status"></div>';
     host.parentNode.insertBefore(c, host.nextSibling);
     $('bkExp').addEventListener('click', exportFile);
     $('bkImp').addEventListener('change', function(e){
@@ -4429,14 +4617,148 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
       if (r.none) return msg('هنوز پشتیبانی در ابر ذخیره نکرده‌ای.', true);
       try { applyBackup(JSON.parse(r.data)); } catch (x) { msg('پشتیبان ابری معتبر نیست.', true); }
     });
-    showCloud();
+    wireSnap(); settingsCard(); showCloud();
   }
   function showCloud(){ var ok = cloudReady(), a = $('bkCloud'), b = $('bkCloudNote'); if (a) a.hidden = !ok; if (b) b.hidden = !ok; }
 
-  function init(){ names(); dash(); card(); scan(D.body); }
+  /* ---------- تنظیمات ---------- */
+  function prefs(){ try { return JSON.parse(lsGet('sj_prefs') || '{}') || {}; } catch (e) { return {}; } }
+  function prefOn(n){ return prefs()[n] !== false; }
+  function setPref(n, v){ var p = prefs(); p[n] = v; lsSet('sj_prefs', JSON.stringify(p)); }
+  function clearBadges(){ Array.prototype.forEach.call(D.querySelectorAll('[data-bank]'), function(el){ el.removeAttribute('data-bank'); el.classList.remove('bk-bad'); }); }
+  function settingsCard(){
+    if ($('setCard')) return;
+    var anchor = $('bkCard'); if (!anchor) return;
+    var c = D.createElement('div'); c.className = 'card'; c.id = 'setCard';
+    c.innerHTML = '<h3>تنظیمات</h3>' +
+      '<label class="chk"><input type="checkbox" id="stBank"><span>نمایش نام بانک کنار شبا</span></label>' +
+      '<label class="chk"><input type="checkbox" id="stNames"><span>پیشنهاد نام از دفتر شبا هنگام تایپ</span></label>' +
+      '<label class="chk"><input type="checkbox" id="stHolder"><span>پر کردن خودکار «صاحب حساب» با اینتر (از دفتر شبا)</span></label>' +
+      '<div class="bkrow" style="margin-top:10px"><label class="f">فی پیش‌فرض لیست جدید<input type="text" id="stFee" inputmode="decimal" dir="ltr" placeholder="مثلاً 71,000,000"></label><label class="f">بشکه به لیتر پیش‌فرض<input type="text" id="stPer" inputmode="decimal" dir="ltr" placeholder="200"></label></div>';
+    anchor.parentNode.insertBefore(c, anchor.nextSibling);
+    var p = prefs();
+    $('stBank').checked = p.bank !== false; $('stNames').checked = p.names !== false; $('stHolder').checked = p.autoHolder !== false;
+    $('stFee').value = p.defFee || ''; $('stPer').value = p.defPer || '';
+    $('stBank').addEventListener('change', function(){ setPref('bank', this.checked); if (this.checked) scan(D.body); else clearBadges(); });
+    $('stNames').addEventListener('change', function(){ setPref('names', this.checked); names(); });
+    $('stHolder').addEventListener('change', function(){ setPref('autoHolder', this.checked); });
+    $('stFee').addEventListener('input', function(){ setPref('defFee', this.value.trim()); });
+    $('stPer').addEventListener('input', function(){ setPref('defPer', this.value.trim()); });
+  }
+
+  /* ---------- نسخه‌ی پشتیبان خودکار روزانه (فقط لیست‌های بار) ---------- */
+  function ymd(d){ return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
+  function snapData(){
+    var o = {};
+    try { for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (k && (k === 'sj_load' || k === 'sj_lists' || /^sj_load_/.test(k))) o[k] = localStorage.getItem(k); } } catch (e) {}
+    return o;
+  }
+  function snapList(){
+    var out = [];
+    try { for (var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if (k && k.indexOf('sj_snap_') === 0) out.push(k); } } catch (e) {}
+    return out.sort().reverse();
+  }
+  function takeSnap(manual){
+    var data = snapData(); if (!data.sj_load && !data.sj_lists) return false;
+    var s = JSON.stringify(data), list = snapList(), now = new Date();
+    var key = 'sj_snap_' + ymd(now) + (manual ? '-' + pad(now.getHours()) + pad(now.getMinutes()) : '');
+    if (!manual && lsGet(key)) return false;
+    if (list.length && lsGet(list[0]) === s) return false;
+    lsSet(key, s);
+    snapList().slice(14).forEach(function(k){ try { localStorage.removeItem(k); } catch (e) {} });
+    return true;
+  }
+  function snapLabel(k){
+    var m = /^sj_snap_(\d{4})(\d{2})(\d{2})(?:-(\d{2})(\d{2}))?$/.exec(k); if (!m) return k;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]), rows = 0;
+    try { var o = JSON.parse(lsGet(k) || '{}'); Object.keys(o).forEach(function(kk){ if (kk === 'sj_load' || /^sj_load_/.test(kk)){ try { var r = JSON.parse(o[kk]); rows += Array.isArray(r.rows) ? r.rows.length : 0; } catch (e) {} } }); } catch (e) {}
+    return d.toLocaleDateString('fa-IR') + (m[4] ? ' ' + fa(m[4] + ':' + m[5]) : '') + ' · ' + fa(rows) + ' ردیف';
+  }
+  function drawSnaps(){
+    var sel = $('snapSel'); if (!sel) return;
+    var l = snapList();
+    sel.innerHTML = l.length ? l.map(function(k){ return '<option value="' + esc(k) + '">' + esc(snapLabel(k)) + '</option>'; }).join('') : '<option value="">هنوز نسخه‌ای نیست</option>';
+  }
+  function wireSnap(){
+    drawSnaps();
+    $('snapNow').addEventListener('click', function(){ var ok = takeSnap(true); drawSnaps(); msg(ok ? 'نسخه‌ی تازه گرفته شد.' : 'چیزی تغییر نکرده یا داده‌ای نیست.', !ok); });
+    $('snapRestore').addEventListener('click', function(){
+      var k = $('snapSel').value; if (!k) return msg('نسخه‌ای انتخاب نشده.', true);
+      try { applyKeys(JSON.parse(lsGet(k)), 'نسخه‌ی انتخابی'); } catch (e) { msg('این نسخه خراب است.', true); }
+    });
+  }
+
+  /* ---------- جستجوی سراسری (Ctrl+K) ---------- */
+  var PAGES = [['خانه', '#/'], ['ابزارها', '#/tool'], ['لیست بار', '#/tool/load'], ['تبدیل حساب به شبا', '#/tool/convert'], ['تجمیع شبا و پیام‌ها', '#/tool/jam'], ['دفتر شبا', '#/tool/daftar'], ['حساب بار قایق', '#/tool/bar'], ['خرید لنج', '#/tool/lanj'], ['قیمت‌ها', '#/pricing'], ['راهنما', '#/guide'], ['تماس با ما', '#/contact'], ['حساب من و تنظیمات', '#/account']];
+  function allRows(){
+    var reg = null; try { reg = JSON.parse(lsGet('sj_lists') || 'null'); } catch (e) {}
+    var ids = reg && Array.isArray(reg.ids) ? reg.ids : ['main'], act = (reg && reg.active) || 'main', out = [];
+    ids.forEach(function(id){
+      var raw = id === act ? lsGet('sj_load') : lsGet('sj_load_' + id);
+      try { var l = JSON.parse(raw || '{}'); (Array.isArray(l.rows) ? l.rows : []).forEach(function(r){ out.push({id: id, name: (reg && reg.names && reg.names[id]) || 'لیست اصلی', r: r}); }); } catch (e) {}
+    });
+    return out;
+  }
+  function results(q){
+    var res = [], n = toEn(q).trim().toLowerCase();
+    PAGES.forEach(function(p){ if (!n || toEn(p[0]).toLowerCase().indexOf(n) >= 0) res.push({label: p[0], sub: 'صفحه', hash: p[1]}); });
+    if (n.length >= 2){
+      var cnt = 0;
+      allRows().forEach(function(x){
+        if (cnt >= 8) return;
+        var hay = [x.r.driver, x.r.holder, x.r.account, x.r.invoice, x.r.car].map(function(v){ return toEn(v || '').toLowerCase(); }).join(' | ');
+        if (hay.indexOf(n) >= 0){ cnt++; res.push({label: (x.r.driver || x.r.holder || x.r.account || 'ردیف') + (x.r.invoice ? ' · فاکتور ' + x.r.invoice : ''), sub: 'لیست بار · ' + x.name, hash: '#/tool/load', list: x.id, q: q.trim()}); }
+      });
+      var c2 = 0;
+      try { (JSON.parse(lsGet('sheba-daftar-records') || '[]') || []).forEach(function(r){ if (c2 >= 6) return; var hay = (toEn((r && r.name) || '') + ' ' + toEn((r && r.sheba) || '')).toLowerCase(); if (hay.indexOf(n) >= 0){ c2++; res.push({label: String(r.name || r.sheba), sub: 'دفتر شبا', hash: '#/tool/daftar'}); } }); } catch (e) {}
+    }
+    return res.slice(0, 14);
+  }
+  var cmdSel = 0, cmdRes = [];
+  function renderCmd(){
+    cmdRes = results($('cmdkIn').value); cmdSel = 0;
+    $('cmdkList').innerHTML = cmdRes.length ? cmdRes.map(function(r, i){ return '<li data-i="' + i + '"' + (i === 0 ? ' class="on"' : '') + '><span>' + esc(r.label) + '</span><small>' + esc(r.sub) + '</small></li>'; }).join('') : '<div class="cmdk-empty">چیزی پیدا نشد.</div>';
+  }
+  function moveCmd(d){
+    var lis = $('cmdkList').querySelectorAll('li'); if (!lis.length) return;
+    lis[cmdSel].classList.remove('on'); cmdSel = (cmdSel + d + lis.length) % lis.length; lis[cmdSel].classList.add('on'); lis[cmdSel].scrollIntoView({block: 'nearest'});
+  }
+  function openCmd(){ cmdkInit(); $('cmdk').hidden = false; $('cmdkIn').value = ''; renderCmd(); setTimeout(function(){ $('cmdkIn').focus(); }, 30); }
+  function closeCmd(){ if ($('cmdk')) $('cmdk').hidden = true; }
+  function pickCmd(i){
+    var r = cmdRes[i]; if (!r) return; closeCmd();
+    location.hash = r.hash;
+    if (r.list) setTimeout(function(){ if (window.SJ_LD){ window.SJ_LD.switchTo(r.list); window.SJ_LD.setFilter(r.q); } }, 350);
+  }
+  function cmdkInit(){
+    if ($('cmdk')) return;
+    var el = D.createElement('div'); el.id = 'cmdk'; el.hidden = true;
+    el.innerHTML = '<div class="cmdk-box"><input type="text" id="cmdkIn" placeholder="جستجو: ابزار، صفحه، راننده، شبا..." autocomplete="off"><ul id="cmdkList"></ul></div>';
+    D.body.appendChild(el);
+    el.addEventListener('click', function(e){ if (e.target === el) closeCmd(); });
+    $('cmdkIn').addEventListener('input', renderCmd);
+    $('cmdkIn').addEventListener('keydown', function(e){
+      if (e.key === 'ArrowDown'){ e.preventDefault(); moveCmd(1); }
+      else if (e.key === 'ArrowUp'){ e.preventDefault(); moveCmd(-1); }
+      else if (e.key === 'Enter'){ e.preventDefault(); pickCmd(cmdSel); }
+      else if (e.key === 'Escape'){ closeCmd(); }
+    });
+    $('cmdkList').addEventListener('click', function(e){ var li = e.target.closest && e.target.closest('li[data-i]'); if (li) pickCmd(+li.getAttribute('data-i')); });
+  }
+  D.addEventListener('keydown', function(e){ if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'k'){ e.preventDefault(); cmdkInit(); if ($('cmdk').hidden) openCmd(); else closeCmd(); } });
+  D.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeCmd(); });
+  D.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#dashSearch')) openCmd(); });
+  function headerSearchBtn(){
+    var act = D.querySelector('.hdr-actions'); if (!act || $('cmdkBtn')) return;
+    var b = D.createElement('button'); b.type = 'button'; b.id = 'cmdkBtn'; b.className = 'themebtn'; b.setAttribute('aria-label', 'جستجو');
+    b.innerHTML = '<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+    b.addEventListener('click', openCmd); act.insertBefore(b, $('themeBtn') || act.firstChild);
+  }
+
+  function init(){ names(); dash(); card(); scan(D.body); takeSnap(false); drawSnaps(); headerSearchBtn(); }
   var tries = 0, iv = setInterval(function(){ showCloud(); if (++tries > 12) clearInterval(iv); }, 1000);
-  window.addEventListener('hashchange', function(){ names(); dash(); card(); });
-  D.addEventListener('visibilitychange', function(){ if (!D.hidden){ names(); dash(); showCloud(); } });
+  window.addEventListener('hashchange', function(){ names(); dash(); card(); drawSnaps(); headerSearchBtn(); });
+  D.addEventListener('visibilitychange', function(){ if (!D.hidden){ names(); dash(); showCloud(); takeSnap(false); } });
   window.addEventListener('storage', function(){ names(); dash(); });
   if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', init); else init();
 })();
