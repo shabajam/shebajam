@@ -3733,7 +3733,7 @@ function buildLoadXlsx(rows, per, opts, type){
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function todayJ(){ var d = new Date(), j = g2j(d.getFullYear(), d.getMonth() + 1, d.getDate()); return j[0] + '/' + pad2(j[1]) + '/' + pad2(j[2]); }
   function per(){ var p = parseAmount($('ldPer').value); return p > 0 ? p : 200; }
-  function blank(){ return {invoice: '', date: todayJ(), driver: '', barrels: '', liters: '', fee: '', account: '', holder: '', car: ''}; }
+  function blank(){ return { nid: '',invoice: '', date: todayJ(), driver: '', barrels: '', liters: '', fee: '', account: '', holder: '', car: ''}; }
   var hist = [], hpos = -1, histT = null, restoring = false;
   function save(){
     pushHist();
@@ -3857,7 +3857,7 @@ function buildLoadXlsx(rows, per, opts, type){
   function flushNow(){ clearTimeout(timer); lsSet(KEY, curState()); lsSet(KEY + '-ts', String(Date.now())); }
   function applyState(data){
     st.rows = Array.isArray(data.rows) ? data.rows : [];
-    st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; });
+    st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; if (r.nid == null) r.nid = ''; });
     if (data.fee) $('ldFee').value = data.fee;
     if (data.per) $('ldPer').value = data.per;
     st.fee = $('ldFee').value.trim();
@@ -4241,7 +4241,7 @@ function buildLoadXlsx(rows, per, opts, type){
     if (saved.per) $('ldPer').value = saved.per;
     st.fee = $('ldFee').value.trim();
     if (Array.isArray(saved.rows)) st.rows = saved.rows;
-    st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; });
+    st.rows.forEach(function(r){ if (r.invoice == null) r.invoice = ''; if (r.nid == null) r.nid = ''; });
   }
   render(); sortHeaders(); drawLists();
 })();
@@ -4943,12 +4943,12 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
       var d = f.contentDocument; if (!d || !d.head || !d.body) return;
       if (!/دفتر شبا/.test(d.title || '') || d.getElementById('shHideCss')) return;
       var st = d.createElement('style'); st.id = 'shHideCss';
-      st.textContent = 'html.sh-hide .sheba{display:none !important}';
+      st.textContent = 'html.sh-hide #list, html.sh-hide .info, html.sh-hide .sheba, html.sh-hide .row, html.sh-hide .count, html.sh-hide .empty {display:none !important}';
       d.head.appendChild(st);
       d.documentElement.classList.add('sh-hide');
-      var b = d.createElement('button'); b.type = 'button'; b.id = 'shToggleBtn'; b.textContent = 'نمایش شباها';
+      var b = d.createElement('button'); b.type = 'button'; b.id = 'shToggleBtn'; b.textContent = 'نمایش همه';
       b.setAttribute('style', 'margin:8px 0;padding:8px 14px;border-radius:10px;border:1px solid #d5dce8;background:transparent;cursor:pointer;font:inherit;color:inherit');
-      b.addEventListener('click', function(){ var on = d.documentElement.classList.toggle('sh-hide'); b.textContent = on ? 'نمایش شباها' : 'پنهان کردن شباها'; });
+      b.addEventListener('click', function(){ var on = d.documentElement.classList.toggle('sh-hide'); b.textContent = on ? 'نمایش همه' : 'پنهان کردن همه'; });
       var anchor = d.getElementById('searchBox') || d.querySelector('input');
       if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(b, anchor.nextSibling); else d.body.insertBefore(b, d.body.firstChild);
     } catch (e) {}
