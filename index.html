@@ -720,6 +720,8 @@ button:hover,.btn:hover{border-color:var(--accent)}
 /* v8: نام راننده و ماشین از جدول لیست بار حذف شد (داده‌ها سر جایشان می‌مانند) */
 label.f[hidden],#ldApplyFee[hidden]{display:none !important}
 .ldt thead th:nth-child(4),.ldt tbody td:nth-child(4),.ldt thead th:nth-child(14),.ldt tbody td:nth-child(14){display:none !important}
+#ldBody input[data-k="nid"]{width:150px;min-width:150px;direction:ltr}
+#ldBody select.w-st{min-width:120px}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1118,7 +1120,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
           <button type="button" class="btn-line" id="ldEnterBtn" style="margin:0 0 8px;padding:8px 14px">↵ ردیف بعد (اینتر)</button>
           <div class="ldwrap">
             <table class="ldt">
-              <thead><tr><th>ردیف</th><th>شماره فاکتور</th><th>تاریخ</th><th>نام راننده</th><th>بشکه</th><th>مازال به لیتر</th><th>بشکه به لیتر</th><th>جمع بار لیتر</th><th>بشکه</th><th>فی</th><th>مبلغ / ریال</th><th>شماره حساب</th><th>صاحب حساب</th><th>ماشین</th><th>کد ملی</th><th></th></tr></thead>
+              <thead><tr><th>ردیف</th><th>شماره فاکتور</th><th>تاریخ</th><th>نام راننده</th><th>بشکه</th><th>مازال به لیتر</th><th>بشکه به لیتر</th><th>جمع بار لیتر</th><th>بشکه</th><th>فی</th><th>مبلغ / ریال</th><th>شماره حساب</th><th>صاحب حساب</th><th>ماشین</th><th>کد ملی</th><th>وضعیت</th><th></th></tr></thead>
               <tbody id="ldBody"></tbody>
             </table>
           </div>
@@ -1561,7 +1563,7 @@ function sheetXml(aoa, colWidths, amtCol){
         cells += '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(v) + '</t></is></c>';
       }
     }
-    return '<row r="' + (ri + 1) + '">' + cells + '</row>';
+    return '<row r="' + (ri + 1) + '" ht="20" customHeight="1">' + cells + '</row>';
   }).join('');
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
@@ -2058,7 +2060,7 @@ function exportTablePDF(headers, rows, colWidths, baseName, title){
   if (!rows.length){ genericToast('چیزی برای خروجی نیست'); return; }
   if (!(window.jspdf && window.jspdf.jsPDF)){ genericToast('کتابخانه PDF بارگذاری نشد؛ به اینترنت نیاز است'); return; }
   try {
-    var PER_PAGE = 25;
+    var PER_PAGE = 18, PW = 842, PH = 595, M = 24;   /* A4 افقی: هر صفحه‌ی جدول کامل داخل صفحه جا می‌شود */
     var pages = [];
     for (var i = 0; i < rows.length; i += PER_PAGE) pages.push(rows.slice(i, i + PER_PAGE));
     var jsPDF = window.jspdf.jsPDF;
@@ -2066,10 +2068,12 @@ function exportTablePDF(headers, rows, colWidths, baseName, title){
     pages.forEach(function(chunk, idx){
       var canvas = drawGenericTablePage(headers, chunk, colWidths, idx + 1, pages.length, title);
       var img = canvas.toDataURL('image/png');
-      var pw = canvas.width / 2, ph = canvas.height / 2;
-      if (!doc) doc = new jsPDF({unit: 'px', format: [pw, ph]});
-      else doc.addPage([pw, ph]);
-      doc.addImage(img, 'PNG', 0, 0, pw, ph);
+      var W = canvas.width / 2, H = canvas.height / 2;
+      var k = Math.min((PW - 2 * M) / W, (PH - 2 * M) / H);
+      var w = W * k, h = H * k, x = (PW - w) / 2, y = (PH - h) / 2;
+      if (!doc) doc = new jsPDF({orientation: 'landscape', unit: 'pt', format: 'a4'});
+      else doc.addPage('a4', 'landscape');
+      doc.addImage(img, 'PNG', x, y, w, h);
     });
     doc.save(baseName + '.pdf');
     genericToast('PDF دانلود شد');
@@ -2077,8 +2081,8 @@ function exportTablePDF(headers, rows, colWidths, baseName, title){
 }
 
 /* ===================== load list (لیست بار) ===================== */
-var LOAD_HEAD = ['ردیف', 'تاریخ', 'نام راننده', 'بشکه', 'مازال به لیتر', 'بشکه به لیتر', 'جمع بار لیتر', 'بشکه', 'فی', 'مبلغ / ریال', 'شماره حساب', 'صاحب حساب', 'ماشین', 'شماره فاکتور', 'کد ملی'];
-var LOAD_WIDTHS = [15, 7.78, 15, 10.33, 10.11, 11, 13.55, 15, 15, 15, 15, 15, 15, 16, 110];
+var LOAD_HEAD = ['ردیف', 'تاریخ', 'نام راننده', 'بشکه', 'مازال به لیتر', 'بشکه به لیتر', 'جمع بار لیتر', 'بشکه', 'فی', 'مبلغ / ریال', 'شماره حساب', 'صاحب حساب', 'ماشین', 'شماره فاکتور', 'کد ملی', 'وضعیت'];
+var LOAD_WIDTHS = [15, 7.78, 15, 10.33, 10.11, 11, 13.55, 15, 15, 15, 15, 15, 15, 16, 110, 100];
 function loadNum(v){
   if (v === '' || v == null) return 0;
   var a = parseAmount(v);
@@ -2217,7 +2221,7 @@ function buildLoadXlsx(rows, per, opts, type){
   function cs(ref, s, val){ return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(val) + '</t></is></c>'; }
   function cn(ref, s, val){ return '<c r="' + ref + '" s="' + s + '"><v>' + String(val) + '</v></c>'; }
   function cf(ref, s, f, val){ return '<c r="' + ref + '" s="' + s + '"><f>' + f + '</f><v>' + String(val) + '</v></c>'; }
-  var hs = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], h = '';
+  var hs = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], h = '';
   LOAD_HEAD.forEach(function(t, j){ h += cs(colName(j) + '1', hs[j], t); });
   lines.push('<row r="1" ht="26" customHeight="1">' + h + '</row>');
   var tot = {D: 0, E: 0, F: 0, G: 0, H: 0, J: 0};
@@ -2239,7 +2243,8 @@ function buildLoadXlsx(rows, per, opts, type){
     if (r.car) x += cs('M' + n, 7, r.car);
     if (r.invoice) x += cs('N' + n, 5, r.invoice);
     if (r.nid) x += cs('O' + n, 5, r.nid);
-    lines.push('<row r="' + n + '">' + x + '</row>');
+    if (r.status) x += cs('P' + n, 5, r.status);
+    lines.push('<row r="' + n + '" ht="20" customHeight="1">' + x + '</row>');
     ['D', 'E', 'F', 'G', 'H', 'J'].forEach(function(key){ if (!isNaN(c[key])) tot[key] += c[key]; });
   });
   var last = rows.length + 1;
@@ -2252,7 +2257,7 @@ function buildLoadXlsx(rows, per, opts, type){
   var cols = '';
   LOAD_WIDTHS.forEach(function(w, j){ cols += '<col min="' + (j + 1) + '" max="' + (j + 1) + '" width="' + w + '" customWidth="1"/>'; });
   var sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-    '<dimension ref="A1:O' + last + '"/><sheetViews><sheetView rightToLeft="1" showGridLines="0" tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="B2" sqref="B2"/></sheetView></sheetViews>' +
+    '<dimension ref="A1:P' + last + '"/><sheetViews><sheetView rightToLeft="1" showGridLines="0" tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="B2" sqref="B2"/></sheetView></sheetViews>' +
     '<sheetFormatPr defaultColWidth="15" defaultRowHeight="18"/><cols>' + cols + '</cols><sheetData>' + lines.join('') + '</sheetData></worksheet>';
   var al = '<alignment horizontal="center" vertical="center"/>';
   var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
@@ -2380,7 +2385,7 @@ function buildLoadXlsx(rows, per, opts, type){
   }
   function loadSheet(i){
     var s = state.sheets[i]; state.si = i;
-    state.rows = s.rows; state.colWidths = s.colWidths || []; state.sheetName = s.name;
+    state.rows = s.rows; state.colWidths = s.colWidths || []; state.sheetName = s.name; importNids(s.rows);
     var d = detectCols(state.rows);
     if (d.ic < 0 || d.ac < 0) showErr('ستون شبا یا مبلغ پیدا نشد. ستون‌ها را دستی انتخاب کن.');
     fillColSelects(d);
@@ -2408,6 +2413,26 @@ function buildLoadXlsx(rows, per, opts, type){
     return {ic: +$('colIban').value, ac: +$('colAmt').value, nc: +$('colName').value, fc: +$('colInv').value, acct: $('acctMode').checked, ncols: state.ncols};
   }
   function minCount(){ return Math.max(1, parseInt($('minCount').value, 10) || 1); }
+  /* ---- اگر فایل تجمیع ستون «کد ملی» داشته باشد، کد ملی‌ها خودکار در دفتر شبا ذخیره می‌شوند ---- */
+  function importNids(rows){
+    if (!rows || rows.length < 2 || !rows[0]) return;
+    var h = rows[0].map(function(x){ return String(x == null ? '' : x); }), ni = -1, si = -1, mi = -1;
+    h.forEach(function(t, j){ if (ni < 0 && /ملی/.test(t)) ni = j; if (si < 0 && /شبا|IBAN/i.test(t)) si = j; if (mi < 0 && /^\s*نام/.test(t)) mi = j; });
+    if (ni < 0) return;
+    var recs = []; try { recs = JSON.parse(localStorage.getItem('sheba-daftar-records') || '[]') || []; } catch (e) {}
+    var changed = 0;
+    rows.slice(1).forEach(function(r){
+      if (!r) return;
+      var nid = String(r[ni] == null ? '' : r[ni]).replace(/\D/g, '');
+      if (nid.length !== 10) return;
+      var sh = normSheba(si >= 0 ? r[si] : '');
+      if (!/^IR\d{24}$/.test(sh)) return;
+      var rec = null; for (var q = 0; q < recs.length; q++){ if (recs[q] && normSheba(recs[q].sheba) === sh){ rec = recs[q]; break; } }
+      if (rec){ if (rec.nid !== nid){ rec.nid = nid; changed++; } }
+      else { recs.push({id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 999), name: (mi >= 0 ? String(r[mi] == null ? '' : r[mi]).trim() : '') || 'بدون نام', sheba: sh, nid: nid}); changed++; }
+    });
+    if (changed) localStorage.setItem('sheba-daftar-records', JSON.stringify(recs));
+  }
   function recompute(){
     state.cols = curCols();
     var an = state.an = analyze(state.rows, state.cols, minCount(), $('sep').value, state.nameSel);
@@ -2599,9 +2624,23 @@ function buildLoadXlsx(rows, per, opts, type){
     });
     return out;
   }
+  /* ---- خروجی تجمیع: A مبلغ | B شماره شبا | C نام و نام خانوادگی | D شماره فاکتور | E کد ملی ---- */
+  function tajmiAoa(onlyMerged){
+    var keep = null, nm = nidMap(), groups = payGroups(), out = [['مبلغ', 'شماره شبا', 'نام و نام خانوادگی', 'شماره فاکتور', 'کد ملی']];
+    if (onlyMerged){
+      var base = exportAoa(true), c0 = state.cols; keep = {};
+      base.slice(1).forEach(function(r){ keep[normSheba(r[c0.ic])] = 1; });
+    }
+    groups.forEach(function(g){
+      if (keep && !keep[g.sh]) return;
+      var rec = nm[g.sh] || {};
+      out.push([Math.round(g.amount), g.sh, g.name || rec.name || '', g.fileInv.join('، '), rec.nid || '']);
+    });
+    return out;
+  }
   function exportXlsx(onlyMerged){
     var c = state.cols;
-    buildXlsx(state.sheetName, withNid(exportAoa(onlyMerged)), state.colWidths.concat([110]), c.ac, 'blob').then(function(blob){
+    buildXlsx(state.sheetName, tajmiAoa(onlyMerged), [110, 210, 200, 170, 130], 0, 'blob').then(function(blob){
       saveBlob(baseName() + (onlyMerged ? '_فقط_جمع_شده' : '_جمع_شده') + '.xlsx', blob);
     }, function(){ toast('ساخت فایل اکسل ناموفق بود'); });
   }
@@ -3255,8 +3294,8 @@ function buildLoadXlsx(rows, per, opts, type){
   var NUMK = {barrels: 1, liters: 1, fee: 1};
   function calcCells(tr, r){
     var c = loadCalc(r, per());
-    tr.querySelector('.cF').textContent = fmt(c.F, 3);
-    tr.querySelector('.cG').textContent = fmt(c.G, 3);
+    tr.querySelector('.cF').textContent = fmt(c.F, 2);
+    tr.querySelector('.cG').textContent = fmt(c.G, 2);
     tr.querySelector('.cH').textContent = fmt(c.H, 4);
     tr.querySelector('.cJ').textContent = fmt(c.J, 0);
     return c;
@@ -3269,8 +3308,8 @@ function buildLoadXlsx(rows, per, opts, type){
       else { t.D += c.D; t.E += c.E; t.G += c.G; t.H += c.H; t.J += c.J; }
     });
     $('ldStats').innerHTML = st.rows.length ?
-      '<span>ردیف‌ها: <b>' + fa(st.rows.length) + '</b></span><span>جمع بشکه: <b>' + fa(fmt(t.D, 3)) + '</b></span><span>جمع لیتر: <b>' + fa(fmt(t.G, 3)) + '</b></span>' +
-      '<span>معادل بشکه: <b>' + fa(fmt(t.H, 3)) + '</b></span><span>مبلغ کل: <b>' + fa(fmt(t.J, 0)) + '</b> ریال (' + fa(fmt(t.J / 10, 0)) + ' تومان)</span>' +
+      '<span>ردیف‌ها: <b>' + fa(st.rows.length) + '</b></span><span>جمع بشکه: <b>' + fa(fmt(t.D, 2)) + '</b></span><span>جمع لیتر: <b>' + fa(fmt(t.G, 2)) + '</b></span>' +
+      '<span>معادل بشکه: <b>' + fa(fmt(t.H, 2)) + '</b></span><span>مبلغ کل: <b>' + fa(fmt(t.J, 0)) + '</b> ریال (' + fa(fmt(t.J / 10, 0)) + ' تومان)</span>' +
       (badN ? '<span class="bad">ردیف نامعتبر: <b>' + fa(badN) + '</b></span>' : '') : '';
     $('ldDl').disabled = !st.rows.length; $('ldCopy').disabled = !st.rows.length;
   }
@@ -3282,14 +3321,18 @@ function buildLoadXlsx(rows, per, opts, type){
     var frag = document.createDocumentFragment();
     st.rows.forEach(function(r, i){
       var tr = document.createElement('tr');
-      function inp(k, cls, dir){
+      function stsel(i, r){
+    var v = r.status || '', o = ['', 'تسویه', 'در حال انتظار', 'تعلیق'];
+    return '<td><select data-i="' + i + '" data-k="status" class="w-st">' + o.map(function(x){ return '<option value="' + x + '"' + (x === v ? ' selected' : '') + '>' + (x || '—') + '</option>'; }).join('') + '</select></td>';
+  }
+  function inp(k, cls, dir){
         var bad = NUMK[k] && r[k] !== '' && isNaN(parseAmount(r[k]));
         var im = NUMK[k] ? ' inputmode="decimal" dir="ltr"' : (k === 'account' ? ' inputmode="numeric" dir="ltr"' : (dir ? ' dir="' + dir + '"' : ''));
         return '<td><input data-i="' + i + '" data-k="' + k + '" class="' + (cls || '') + (bad ? ' bad' : '') + '" value="' + esc(r[k]) + '"' + im + '></td>';
       }
       tr.innerHTML = '<td class="cn">' + fa(i + 1) + '</td>' + inp('invoice', 'w-inv') + inp('date', 'w-date', 'ltr') + inp('driver', 'w-name') + inp('barrels', 'w-num') + inp('liters', 'w-num') +
         '<td class="ro cF"></td><td class="ro cG"></td><td class="ro cH"></td>' + inp('fee', 'w-fee') + '<td class="ro cJ"></td>' +
-        inp('account', 'w-acc', 'ltr') + inp('holder', 'w-name') + inp('car', 'w-car') + inp('nid', 'w-nid') +
+        inp('account', 'w-acc', 'ltr') + inp('holder', 'w-name') + inp('car', 'w-car') + inp('nid', 'w-nid') + stsel(i, r) +
         '<td><button type="button" class="ldx" data-del="' + i + '" aria-label="حذف ردیف">×</button></td>';
       calcCells(tr, r);
       frag.appendChild(tr);
@@ -3472,9 +3515,9 @@ function buildLoadXlsx(rows, per, opts, type){
     var reg = regGet(), title = reg.names[reg.active] || 'لیست بار';
     var lines = ['صورت‌حساب ' + o.name, 'لیست: ' + title, ''];
     o.rows.forEach(function(x, i){
-      lines.push((i + 1) + ') ' + (x.r.invoice ? 'فاکتور ' + x.r.invoice + ' · ' : '') + (x.r.date ? x.r.date + ' · ' : '') + fmt(x.c.D, 3) + ' بشکه · ' + fmt(x.c.J / 10, 0) + ' تومان');
+      lines.push((i + 1) + ') ' + (x.r.invoice ? 'فاکتور ' + x.r.invoice + ' · ' : '') + (x.r.date ? x.r.date + ' · ' : '') + fmt(x.c.D, 2) + ' بشکه · ' + fmt(x.c.J / 10, 0) + ' تومان');
     });
-    lines.push('', 'جمع: ' + o.n + ' ردیف · ' + fmt(o.D, 3) + ' بشکه · ' + fmt(o.G, 3) + ' لیتر', 'مبلغ کل: ' + fmt(o.J / 10, 0) + ' تومان');
+    lines.push('', 'جمع: ' + o.n + ' ردیف · ' + fmt(o.D, 2) + ' بشکه · ' + fmt(o.G, 2) + ' لیتر', 'مبلغ کل: ' + fmt(o.J / 10, 0) + ' تومان');
     return fa(lines.join('\n'));
   }
   function renderStmt(){
@@ -3484,8 +3527,8 @@ function buildLoadXlsx(rows, per, opts, type){
     var T = {n: 0, D: 0, G: 0, J: 0}; ds.forEach(function(o){ T.n += o.n; T.D += o.D; T.G += o.G; T.J += o.J; });
     box._ds = ds;
     box.innerHTML = '<table><thead><tr><th>شماره حساب</th><th>ردیف</th><th>بشکه</th><th>لیتر</th><th>مبلغ (تومان)</th><th></th></tr></thead><tbody>' +
-      ds.map(function(o, i){ return '<tr><td>' + esc(o.name) + '</td><td>' + fa(o.n) + '</td><td>' + fa(fmt(o.D, 3)) + '</td><td>' + fa(fmt(o.G, 3)) + '</td><td>' + fa(fmt(o.J / 10, 0)) + '</td><td><button type="button" data-wa="' + i + '">واتساپ</button> <button type="button" data-cp="' + i + '">کپی</button></td></tr>'; }).join('') +
-      '</tbody><tfoot><tr><td>جمع کل</td><td>' + fa(T.n) + '</td><td>' + fa(fmt(T.D, 3)) + '</td><td>' + fa(fmt(T.G, 3)) + '</td><td>' + fa(fmt(T.J / 10, 0)) + '</td><td></td></tr></tfoot></table>';
+      ds.map(function(o, i){ return '<tr><td>' + esc(o.name) + '</td><td>' + fa(o.n) + '</td><td>' + fa(fmt(o.D, 2)) + '</td><td>' + fa(fmt(o.G, 2)) + '</td><td>' + fa(fmt(o.J / 10, 0)) + '</td><td><button type="button" data-wa="' + i + '">واتساپ</button> <button type="button" data-cp="' + i + '">کپی</button></td></tr>'; }).join('') +
+      '</tbody><tfoot><tr><td>جمع کل</td><td>' + fa(T.n) + '</td><td>' + fa(fmt(T.D, 2)) + '</td><td>' + fa(fmt(T.G, 2)) + '</td><td>' + fa(fmt(T.J / 10, 0)) + '</td><td></td></tr></tfoot></table>';
   }
   if ($('ldStmt')) $('ldStmt').addEventListener('click', function(){ var b = $('ldStmtBox'); b.hidden = !b.hidden; if (!b.hidden) renderStmt(); });
   if ($('ldStmtBox')) $('ldStmtBox').addEventListener('click', function(e){
@@ -3532,8 +3575,9 @@ function buildLoadXlsx(rows, per, opts, type){
     API.toast(rec ? 'کد ملی در دفتر شبا ذخیره شد' : 'حساب با کد ملی به دفتر شبا اضافه شد');
   }
   $('ldBody').addEventListener('change', function(e){
-    var t = e.target; if (!t.getAttribute || t.getAttribute('data-k') !== 'nid') return;
+    var t = e.target; if (!t.getAttribute || (t.getAttribute('data-k') !== 'nid' && t.getAttribute('data-k') !== 'status')) return;
     var r = st.rows[+t.getAttribute('data-i')]; if (!r) return;
+    if (t.getAttribute('data-k') === 'status'){ r.status = t.value; save(); render(); return; }
     saveNid(r); save(); render();
   });
   function visIdx(i, dir){
@@ -3574,7 +3618,7 @@ function buildLoadXlsx(rows, per, opts, type){
     clearFilter(); st.rows.push(nr); save(); render(); focusLdCell(st.rows.length - 1, k);
   });
   var FULLK = ['invoice', 'date', 'driver', 'barrels', 'liters', null, null, null, 'fee', null, 'account', 'holder', 'car'];
-  var EDITK = ['invoice', 'date', 'driver', 'barrels', 'liters', 'fee', 'account', 'holder', 'car', 'nid'];
+  var EDITK = ['invoice', 'date', 'driver', 'barrels', 'liters', 'fee', 'account', 'holder', 'car', 'nid', 'status'];
   $('ldBody').addEventListener('paste', function(e){
     var t = e.target, k = t && t.getAttribute && t.getAttribute('data-k'); if (k == null) return;
     var txt = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\r/g, '').replace(/\n+$/, '');
@@ -3697,7 +3741,7 @@ function buildLoadXlsx(rows, per, opts, type){
   function ldTableRows(){
     return st.rows.map(function(r, i){
       var c = loadCalc(r, per());
-      return [i + 1, r.invoice || '', r.date, r.driver, fmt(c.D, 3), fmt(c.G, 3), fmt(c.H, 3), fmt(c.J, 0), r.account, r.holder, r.car];
+      return [i + 1, r.invoice || '', r.date, r.driver, fmt(c.D, 2), fmt(c.G, 2), fmt(c.H, 2), fmt(c.J, 0), r.account, r.holder, r.car];
     });
   }
   var LD_TABLE_HEAD = ['ردیف', 'شماره فاکتور', 'تاریخ', 'راننده', 'بشکه', 'جمع لیتر', 'معادل بشکه', 'مبلغ/ریال', 'شماره حساب', 'صاحب حساب', 'ماشین'];
