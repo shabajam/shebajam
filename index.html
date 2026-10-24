@@ -1574,14 +1574,39 @@ function safeSheetName(n){
   n = String(n || 'Sheet1').replace(/[\\\/?*\[\]:]/g, '_').slice(0, 31);
   return n || 'Sheet1';
 }
-function buildXlsx(sheetName, aoa, colWidths, amtCol, type){
+  function fitRows(xml, widths){
+    var maxLen = {};
+    xml.replace(/<c r="([A-Z]+)\d+"[^>]*><is><t[^>]*>([\s\S]*?)<\/t><\/is><\/c>/g, function(m, col, txt){
+      var ci = 0; for (var k = 0; k < col.length; k++) ci = ci * 26 + (col.charCodeAt(k) - 64); ci -= 1;
+      var L = String(txt).replace(/&amp;/g, '&').length; if (L > (maxLen[ci] || 0)) maxLen[ci] = L; return m;
+    });
+    var nw = [];
+    xml = xml.replace(/<col min="(\d+)" max="\d+" width="([\d.]+)"/g, function(m, mn, w){
+      var ci = +mn - 1, base = parseFloat(w), want = Math.min(40, Math.max(base, Math.ceil((maxLen[ci] || 0) * 1.15) + 2));
+      nw[ci] = want; return '<col min="' + mn + '" max="' + mn + '" width="' + want.toFixed(2) + '"';
+    });
+    widths = nw.length ? nw : widths;
+    return xml.replace(/<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g, function(all, rn, body){
+      var lines = 1;
+      body.replace(/<c r="([A-Z]+)\d+"[^>]*><is><t[^>]*>([\s\S]*?)<\/t><\/is><\/c>/g, function(m, col, txt){
+        var ci = 0; for (var k = 0; k < col.length; k++) ci = ci * 26 + (col.charCodeAt(k) - 64); ci -= 1;
+        var w = (widths && widths[ci]) ? widths[ci] : 14;
+        var chars = Math.max(4, Math.floor(w)), ln = 0;
+        String(txt).replace(/&amp;/g, '&').split('\n').forEach(function(p){ ln += Math.max(1, Math.ceil(p.length / chars)); });
+        if (ln > lines) lines = ln; return m;
+      });
+      var ht = Math.max(18, lines * 15 + 5);
+      return all.replace(/<row r="(\d+)"[^>]*>/, '<row r="' + rn + '" ht="' + ht + '" customHeight="1">');
+    });
+  }
+  function buildXlsx(sheetName, aoa, colWidths, amtCol, type){
   var zip = new JSZip();
   zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
   zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
   zip.file('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + xmlEsc(safeSheetName(sheetName)) + '" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
   zip.file('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
   zip.file('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Yekan"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="3" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>');
-  zip.file('xl/worksheets/sheet1.xml', sheetXml(aoa, colWidths, amtCol));
+  zip.file('xl/worksheets/sheet1.xml', fitRows(sheetXml(aoa, colWidths, amtCol), colWidths));
   return zip.generateAsync({type: type || 'blob', compression: 'DEFLATE',
     mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
@@ -2215,7 +2240,32 @@ function parseLoadPaste(text){
   var rows = text.split(/\r?\n/).filter(function(l){ return l.trim() !== ''; }).map(function(l){ return l.split('\t'); });
   return parseLoadRows(rows);
 }
-function buildLoadXlsx(rows, per, opts, type){
+  function fitRows(xml, widths){
+    var maxLen = {};
+    xml.replace(/<c r="([A-Z]+)\d+"[^>]*><is><t[^>]*>([\s\S]*?)<\/t><\/is><\/c>/g, function(m, col, txt){
+      var ci = 0; for (var k = 0; k < col.length; k++) ci = ci * 26 + (col.charCodeAt(k) - 64); ci -= 1;
+      var L = String(txt).replace(/&amp;/g, '&').length; if (L > (maxLen[ci] || 0)) maxLen[ci] = L; return m;
+    });
+    var nw = [];
+    xml = xml.replace(/<col min="(\d+)" max="\d+" width="([\d.]+)"/g, function(m, mn, w){
+      var ci = +mn - 1, base = parseFloat(w), want = Math.min(40, Math.max(base, Math.ceil((maxLen[ci] || 0) * 1.15) + 2));
+      nw[ci] = want; return '<col min="' + mn + '" max="' + mn + '" width="' + want.toFixed(2) + '"';
+    });
+    widths = nw.length ? nw : widths;
+    return xml.replace(/<row r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g, function(all, rn, body){
+      var lines = 1;
+      body.replace(/<c r="([A-Z]+)\d+"[^>]*><is><t[^>]*>([\s\S]*?)<\/t><\/is><\/c>/g, function(m, col, txt){
+        var ci = 0; for (var k = 0; k < col.length; k++) ci = ci * 26 + (col.charCodeAt(k) - 64); ci -= 1;
+        var w = (widths && widths[ci]) ? widths[ci] : 14;
+        var chars = Math.max(4, Math.floor(w)), ln = 0;
+        String(txt).replace(/&amp;/g, '&').split('\n').forEach(function(p){ ln += Math.max(1, Math.ceil(p.length / chars)); });
+        if (ln > lines) lines = ln; return m;
+      });
+      var ht = Math.max(18, lines * 15 + 5);
+      return all.replace(/<row r="(\d+)"[^>]*>/, '<row r="' + rn + '" ht="' + ht + '" customHeight="1">');
+    });
+  }
+  function buildLoadXlsx(rows, per, opts, type){
   per = per > 0 ? per : 200; opts = opts || {};
   var lines = [], i, n;
   function cs(ref, s, val){ return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(val) + '</t></is></c>'; }
@@ -2259,7 +2309,7 @@ function buildLoadXlsx(rows, per, opts, type){
   var sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
     '<dimension ref="A1:P' + last + '"/><sheetViews><sheetView rightToLeft="1" showGridLines="0" tabSelected="1" workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="B2" sqref="B2"/></sheetView></sheetViews>' +
     '<sheetFormatPr defaultColWidth="15" defaultRowHeight="18"/><cols>' + cols + '</cols><sheetData>' + lines.join('') + '</sheetData></worksheet>';
-  var al = '<alignment horizontal="center" vertical="center"/>';
+  var al = '<alignment horizontal="center" vertical="center" wrapText="1"/>';
   var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
     '<fonts count="5"><font><sz val="11"/><name val="Yekan"/></font><font><b/><sz val="11"/><color rgb="FF0B1220"/><name val="Yekan"/></font><font><sz val="11"/><color rgb="FF0B1220"/><name val="Yekan"/></font><font><b/><sz val="11"/><color rgb="FF0B1220"/><name val="Yekan"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Yekan"/></font></fonts>' +
     '<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0B1220"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF3F6FA"/><bgColor indexed="64"/></patternFill></fill></fills>' +
@@ -2268,12 +2318,12 @@ function buildLoadXlsx(rows, per, opts, type){
     '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
     '<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
     '<xf numFmtId="0" fontId="3" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>' +
-    '<xf numFmtId="3" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-    '<xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-    '<xf numFmtId="3" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
-    '<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="3" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="3" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="3" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
     '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
   var zip = new JSZip();
   zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
@@ -2281,7 +2331,7 @@ function buildLoadXlsx(rows, per, opts, type){
   zip.file('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>');
   zip.file('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
   zip.file('xl/styles.xml', styles);
-  zip.file('xl/worksheets/sheet1.xml', sheet);
+  zip.file('xl/worksheets/sheet1.xml', fitRows(sheet, LOAD_WIDTHS));
   return zip.generateAsync({type: type || 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
 
@@ -2627,10 +2677,8 @@ function buildLoadXlsx(rows, per, opts, type){
   /* ---- خروجی تجمیع: A مبلغ | B شماره شبا | C نام و نام خانوادگی | D شماره فاکتور | E کد ملی ---- */
   function tajmiAoa(onlyMerged){
     var keep = null, nm = nidMap(), groups = payGroups(), out = [['مبلغ', 'شماره شبا', 'نام و نام خانوادگی', 'شماره فاکتور', 'کد ملی']];
-    if (onlyMerged){
-      var base = exportAoa(true), c0 = state.cols; keep = {};
-      base.slice(1).forEach(function(r){ keep[normSheba(r[c0.ic])] = 1; });
-    }
+    var base = exportAoa(true), c0 = state.cols; keep = {};
+    base.slice(1).forEach(function(r){ keep[normSheba(r[c0.ic])] = 1; });
     groups.forEach(function(g){
       if (keep && !keep[g.sh]) return;
       var rec = nm[g.sh] || {};
