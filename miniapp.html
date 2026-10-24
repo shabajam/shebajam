@@ -3141,13 +3141,11 @@ function parseLoadPaste(text){
   }
   /* ---- خروجی تجمیع: A مبلغ | B شماره شبا | C نام و نام خانوادگی | D شماره فاکتور | E کد ملی ---- */
   function tajmiAoa(onlyMerged){
-    var keep = null, nm = nidMap(), groups = payGroups(), out = [['مبلغ', 'شماره شبا', 'نام و نام خانوادگی', 'شماره فاکتور', 'کد ملی']];
-    var base = exportAoa(true), c0 = state.cols; keep = {};
-    base.slice(1).forEach(function(r){ keep[normSheba(r[c0.ic])] = 1; });
-    groups.forEach(function(g){
-      if (keep && !keep[g.sh]) return;
-      var rec = nm[g.sh] || {};
-      out.push([Math.round(g.amount), g.sh, g.name || rec.name || '', g.fileInv.join('، '), rec.nid || '']);
+    var nm = nidMap(), sep = $('sep').value, unit = opts().unit, out = [['مبلغ', 'شماره شبا', 'نام و نام خانوادگی', 'شماره فاکتور', 'کد ملی']];
+    msgList().forEach(function(e){
+      var sh = normSheba(e.g.iban), rec = nm[sh] || {};
+      var amt = entrySum(e); if (unit === 'rial') amt = amt / 10;
+      out.push([Math.round(amt * 100) / 100, sh, chosenName(e.g) || entryName(e) || rec.name || '', String(entryInvoice(e, sep).text || ''), rec.nid || '']);
     });
     return out;
   }
