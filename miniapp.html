@@ -2044,7 +2044,7 @@ function safeSheetName(n){
     });
     var nw = [];
     xml = xml.replace(/<col min="(\d+)" max="\d+" width="([\d.]+)"/g, function(m, mn, w){
-      var ci = +mn - 1, base = parseFloat(w), want = Math.min(40, Math.max(base, Math.ceil((maxLen[ci] || 0) * 1.15) + 2));
+      var ci = +mn - 1, base = parseFloat(w), want = Math.max(8, Math.min(30, Math.ceil((maxLen[ci] || 0) * 0.95) + 2));
       nw[ci] = want; return '<col min="' + mn + '" max="' + mn + '" width="' + want.toFixed(2) + '"';
     });
     widths = nw.length ? nw : widths;
@@ -2057,7 +2057,7 @@ function safeSheetName(n){
         String(txt).replace(/&amp;/g, '&').split('\n').forEach(function(p){ ln += Math.max(1, Math.ceil(p.length / chars)); });
         if (ln > lines) lines = ln; return m;
       });
-      var ht = Math.max(18, lines * 15 + 5);
+      var ht = Math.max(15, lines * 14 + 3);
       return all.replace(/<row r="(\d+)"[^>]*>/, '<row r="' + rn + '" ht="' + ht + '" customHeight="1">');
     });
   }
@@ -2711,7 +2711,7 @@ function parseLoadPaste(text){
     });
     var nw = [];
     xml = xml.replace(/<col min="(\d+)" max="\d+" width="([\d.]+)"/g, function(m, mn, w){
-      var ci = +mn - 1, base = parseFloat(w), want = Math.min(40, Math.max(base, Math.ceil((maxLen[ci] || 0) * 1.15) + 2));
+      var ci = +mn - 1, base = parseFloat(w), want = Math.max(8, Math.min(30, Math.ceil((maxLen[ci] || 0) * 0.95) + 2));
       nw[ci] = want; return '<col min="' + mn + '" max="' + mn + '" width="' + want.toFixed(2) + '"';
     });
     widths = nw.length ? nw : widths;
@@ -2724,7 +2724,7 @@ function parseLoadPaste(text){
         String(txt).replace(/&amp;/g, '&').split('\n').forEach(function(p){ ln += Math.max(1, Math.ceil(p.length / chars)); });
         if (ln > lines) lines = ln; return m;
       });
-      var ht = Math.max(18, lines * 15 + 5);
+      var ht = Math.max(15, lines * 14 + 3);
       return all.replace(/<row r="(\d+)"[^>]*>/, '<row r="' + rn + '" ht="' + ht + '" customHeight="1">');
     });
   }
