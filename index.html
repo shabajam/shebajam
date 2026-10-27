@@ -2679,7 +2679,7 @@ function parseLoadPaste(text){
     var nm = nidMap(), sep = $('sep').value, unit = opts().unit, out = [['مبلغ', 'شماره شبا', 'نام و نام خانوادگی', 'شماره فاکتور', 'کد ملی']];
     msgList().forEach(function(e){
       var sh = normSheba(e.g.iban), rec = nm[sh] || {};
-      var amt = entrySum(e); if (unit === 'rial') amt = amt / 10;
+      var amt = entrySum(e); if (unit === 'toman') amt = amt * 10;
       out.push([Math.round(amt * 100) / 100, sh, chosenName(e.g) || entryName(e) || rec.name || '', String(entryInvoice(e, sep).text || ''), rec.nid || '']);
     });
     return out;
@@ -3620,6 +3620,15 @@ function parseLoadPaste(text){
     localStorage.setItem('sheba-daftar-records', JSON.stringify(recs));
     API.toast(rec ? 'کد ملی در دفتر شبا ذخیره شد' : 'حساب با کد ملی به دفتر شبا اضافه شد');
   }
+  function saveAcctName(r){
+    var acct = String(r.account || '').replace(/\D/g, ''), name = String(r.holder || r.driver || '').trim();
+    if (!acct || !name) return;
+    var recs = recsAll(), rec = recOnAcc(recs, acct);
+    if (rec){ if (rec.name && rec.name !== 'بدون نام') return; rec.name = name; }
+    else { recs.push({id: 'b' + Date.now().toString(36) + Math.floor(Math.random() * 999), name: name, sheba: ibanAcc(acct)}); }
+    localStorage.setItem('sheba-daftar-records', JSON.stringify(recs));
+    API.toast('در دفتر شبا ذخیره شد');
+  }
   $('ldBody').addEventListener('change', function(e){
     var t = e.target; if (!t.getAttribute || (t.getAttribute('data-k') !== 'nid' && t.getAttribute('data-k') !== 'status')) return;
     var r = st.rows[+t.getAttribute('data-i')]; if (!r) return;
@@ -3640,6 +3649,13 @@ function parseLoadPaste(text){
     var t = e.target, k = t && t.getAttribute && t.getAttribute('data-k');
     if (k == null) return;
     var i = +t.getAttribute('data-i');
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.altKey && !e.shiftKey && !e.ctrlKey && !e.metaKey){
+      var rowEl = t.closest ? t.closest('tr') : null;
+      var cellsH = rowEl ? [].slice.call(rowEl.querySelectorAll('input[data-k],select[data-k]')).filter(function(x){ return x.offsetParent !== null; }) : [];
+      var ciH = cellsH.indexOf(t), nxtH = e.key === 'ArrowLeft' ? cellsH[ciH + 1] : cellsH[ciH - 1];
+      if (nxtH){ e.preventDefault(); nxtH.focus(); if (nxtH.select) nxtH.select(); }
+      return;
+    }
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !e.altKey && !e.shiftKey){
       var j = visIdx(i, e.key === 'ArrowDown' ? 1 : -1);
       if (j >= 0){ e.preventDefault(); focusLdCell(j, k); }
@@ -3648,6 +3664,7 @@ function parseLoadPaste(text){
     if (e.key !== 'Enter' || e.shiftKey) return;
     e.preventDefault();
     var cN = st.rows[i];
+    if ((k === 'account' || k === 'holder' || k === 'driver') && cN) saveAcctName(cN);
     if (k === 'nid' && cN){ saveNid(cN); save(); render(); }
     if (k === 'account' && cN && String(cN.account || '').trim() && !String(cN.nid || '').trim()){ var rN = findRecByAcc(cN.account); if (rN && rN.nid){ cN.nid = rN.nid; save(); render(); } }
     /* اینتر در ستون «حساب»: اگر صاحب حساب خالی است، از دفتر شبا پر می‌شود */
