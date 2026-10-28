@@ -1171,6 +1171,9 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
 .ldt thead th:nth-child(4),.ldt tbody td:nth-child(4),.ldt thead th:nth-child(14),.ldt tbody td:nth-child(14){display:none !important}
 #ldBody input[data-k="nid"]{width:150px;min-width:150px;direction:ltr}
 #ldBody select.w-st{min-width:120px}
+@media (max-width: 820px){
+  #ldEnterBtn{position:fixed !important;right:14px !important;bottom:92px !important;z-index:80 !important;margin:0 !important;border-radius:999px !important;box-shadow:0 8px 20px rgba(0,0,0,.25) !important;padding:10px 18px !important}
+}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -4176,7 +4179,8 @@ function parseLoadPaste(text){
       if (j >= 0){ e.preventDefault(); focusLdCell(j, k); }
       return;
     }
-    if (e.key !== 'Enter' || e.shiftKey) return;
+    var isEnterKey = e.key === 'Enter' || e.keyCode === 13 || e.which === 13;
+    if (!isEnterKey || e.shiftKey) return;
     e.preventDefault();
     var cN = st.rows[i];
     if ((k === 'account' || k === 'holder' || k === 'driver') && cN) saveAcctName(cN);
@@ -5061,7 +5065,7 @@ window.SJ_EMBED.setData('paya', "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImZhIiBkaXI
 
   /* ---- دکمه‌ی ↵ برای موبایل: همان کار اینتر (ردیف بعد در همان ستون) ---- */
   var lastLd = null;
-  D.addEventListener('focusin', function(e){ if (e.target && e.target.closest && e.target.closest('#ldBody')) lastLd = e.target; });
+  D.addEventListener('focusin', function(e){ if (e.target && e.target.closest && e.target.closest('#ldBody')){ lastLd = e.target; if (e.target.setAttribute) e.target.setAttribute('enterkeyhint', 'enter'); } });
   D.addEventListener('click', function(e){
     var b = e.target.closest && e.target.closest('#ldEnterBtn'); if (!b) return;
     var t = lastLd && D.contains(lastLd) ? lastLd : D.querySelector('#ldBody input'); if (!t) return;
