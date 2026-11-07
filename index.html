@@ -744,6 +744,162 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
 @media (max-width: 820px){
   #ldEnterBtn{position:fixed !important;right:14px !important;bottom:92px !important;z-index:80 !important;margin:0 !important;border-radius:999px !important;box-shadow:0 8px 20px rgba(0,0,0,.25) !important;padding:10px 18px !important}
 }
+
+/* ===== نسخه‌ی شیشه‌ای (الهام از نمونه‌ها): پررنگ ===== */
+:root{--gl-bg:rgba(255,255,255,.55);--gl-bd:rgba(255,255,255,.7);--gl-sh:0 18px 50px rgba(15,23,42,.14)}
+:root[data-theme="dark"]{--gl-bg:rgba(16,23,34,.55);--gl-bd:rgba(255,255,255,.12);--gl-sh:0 18px 50px rgba(0,0,0,.45)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--gl-bg:rgba(16,23,34,.55);--gl-bd:rgba(255,255,255,.12);--gl-sh:0 18px 50px rgba(0,0,0,.45)}}
+body{background:linear-gradient(135deg,#eef4ff 0%,#f7fbf9 55%,#fdf6ee 100%) fixed}
+:root[data-theme="dark"] body,@media (prefers-color-scheme: dark){}
+html[data-theme="dark"] body{background:linear-gradient(135deg,#06101e 0%,#0a1a22 55%,#150d1f 100%) fixed}
+.site-header{background:var(--gl-bg) !important;backdrop-filter:blur(28px) saturate(190%) !important;-webkit-backdrop-filter:blur(28px) saturate(190%) !important;border-bottom:1px solid var(--gl-bd) !important;box-shadow:var(--gl-sh)}
+.tcard,.lt,.card,.plan,.step,.app-dl-card,.feat{background:var(--gl-bg) !important;backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--gl-bd) !important;box-shadow:var(--gl-sh) !important}
+.bottomnav{background:var(--gl-bg) !important;backdrop-filter:blur(26px) saturate(190%) !important;-webkit-backdrop-filter:blur(26px) saturate(190%) !important;border:1px solid var(--gl-bd) !important;box-shadow:var(--gl-sh) !important}
+.bottomnav a.active{background:linear-gradient(135deg,#2563EB,#14B8A6) !important;color:#fff !important}
+/* نوار کناری جمع‌شونده (فقط کامپیوتر) */
+.rail{display:none}
+@media (min-width:1100px){
+  body{padding-right:256px}
+  html.rail-collapsed body{padding-right:96px}
+  .rail{display:flex;flex-direction:column;gap:6px;position:fixed;top:92px;right:14px;bottom:14px;width:232px;z-index:60;padding:14px 10px;border-radius:24px;background:var(--gl-bg);backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid var(--gl-bd);box-shadow:var(--gl-sh);overflow:auto;transition:width .25s ease}
+  html.rail-collapsed .rail{width:64px}
+  .rail a,.rail button{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:14px;color:var(--ink);text-decoration:none;font:inherit;font-size:14.5px;background:none;border:0;cursor:pointer;white-space:nowrap;overflow:hidden}
+  .rail a:hover,.rail button:hover{background:rgba(37,99,235,.10)}
+  .rail a.active{background:linear-gradient(135deg,rgba(37,99,235,.22),rgba(20,184,166,.22));font-weight:700}
+  .rail .ri{width:22px;height:22px;flex:0 0 22px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent)}
+  html.rail-collapsed .rail .rl{display:none}
+  .rail .rsep{height:1px;background:var(--gl-bd);margin:6px 8px}
+  .rail .rt{margin-inline-start:auto}
+  .site-header{padding-inline-end:20px}
+}
+@media (max-width:1099px){ .rail{display:none !important} }
+
+/* ===== حرکت و گرافیک (الهام از کلیپ‌ها) ===== */
+@keyframes sjRise{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes sjDrift{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,-20px) scale(1.08)}}
+@keyframes sjShine{from{transform:translateX(-120%) skewX(-18deg)}to{transform:translateX(220%) skewX(-18deg)}}
+@keyframes sjGlow{0%,100%{box-shadow:0 0 0 0 rgba(20,184,166,.0)}50%{box-shadow:0 0 0 6px rgba(20,184,166,.12)}}
+body::before{display:block !important;content:"";position:fixed;inset:-10%;z-index:-1;pointer-events:none;
+  background:radial-gradient(540px 360px at 12% 18%,rgba(37,99,235,.22),transparent 70%),radial-gradient(520px 340px at 88% 74%,rgba(20,184,166,.20),transparent 70%),radial-gradient(420px 300px at 60% 40%,rgba(139,92,246,.14),transparent 70%);
+  animation:sjDrift 18s ease-in-out infinite;filter:blur(8px)}
+:root[data-theme="dark"] body::before{opacity:.9}
+/* کارت‌ها: ورود با تأخیر، بلند شدن و درخشش هنگام نشانگر */
+.lt-grid>*,.tcard,.bento>*,.plans>*,.steps>*{animation:sjRise .7s cubic-bezier(.2,.8,.2,1) both}
+.lt-grid>*:nth-child(2),.bento>*:nth-child(2){animation-delay:.07s}
+.lt-grid>*:nth-child(3),.bento>*:nth-child(3){animation-delay:.14s}
+.lt-grid>*:nth-child(4),.bento>*:nth-child(4){animation-delay:.21s}
+.lt-grid>*:nth-child(5),.bento>*:nth-child(5){animation-delay:.28s}
+.lt-grid>*:nth-child(6),.bento>*:nth-child(6){animation-delay:.35s}
+.lt,.tcard,.card,.plan{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease,border-color .35s ease;position:relative;overflow:hidden}
+.lt:hover,.tcard:hover,.plan:hover{transform:translateY(-6px);border-color:rgba(20,184,166,.55) !important;box-shadow:0 26px 60px rgba(37,99,235,.22),0 0 0 1px rgba(20,184,166,.18) !important}
+.lt::after,.tcard::after,.plan::after{content:"";position:absolute;top:0;bottom:0;width:38%;left:0;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-120%) skewX(-18deg);pointer-events:none}
+.lt:hover::after,.tcard:hover::after,.plan:hover::after{animation:sjShine .9s ease}
+.lti,.ti{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.lt:hover .lti,.tcard:hover .ti{transform:scale(1.08) rotate(-4deg)}
+/* دکمه‌ها */
+.btn-blue,.btn-mint,button.primary{transition:transform .25s ease,box-shadow .25s ease,filter .25s ease}
+.btn-blue:hover,.btn-mint:hover,button.primary:hover{box-shadow:0 14px 34px rgba(20,184,166,.35)}
+.btn-blue:active,.btn-line:active,.btn-mint:active{transform:scale(.97)}
+/* منوی بالا: نشانگر متحرک با درخشش */
+.nav{position:relative}
+.nav .sjpill{position:absolute;top:0;height:0;border-radius:999px;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(20,184,166,.22));box-shadow:0 0 18px rgba(20,184,166,.28);transition:left .45s cubic-bezier(.2,.8,.2,1),width .45s cubic-bezier(.2,.8,.2,1),height .45s ease;pointer-events:none;z-index:0}
+.nav a{position:relative;z-index:1}
+.nav a.active{background:none !important;box-shadow:none}
+/* نوار پایین موبایل: بزرگ‌شدن آیکون‌ها */
+.bottomnav a{transition:transform .3s cubic-bezier(.2,.8,.2,1),background .3s ease}
+.bottomnav a:active{transform:scale(.92)}
+.bottomnav a.active .ic{transform:translateY(-2px) scale(1.12);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+/* نوار کناری */
+.rail a{transition:background .25s ease,transform .25s ease}
+.rail a:hover{transform:translateX(-3px)}
+.rail a.active{box-shadow:0 0 16px rgba(20,184,166,.25)}
+.rail a.active .ri{animation:sjGlow 2.4s ease-in-out infinite}
+/* ورودی‌ها و مرورگر کم‌حرکت */
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px rgba(20,184,166,.22) !important}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+
+/* ===== نوار کناری (طرح کلیپ V3): پنل شیشه‌ای شناور ===== */
+@media (min-width:1100px){
+  .rail{top:18px;bottom:18px;right:18px;width:248px;border-radius:28px;padding:16px 12px;background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.44));border:1px solid rgba(255,255,255,.75)}
+  :root[data-theme="dark"] .rail{background:linear-gradient(180deg,rgba(18,26,40,.78),rgba(10,16,26,.66));border:1px solid rgba(255,255,255,.1)}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rail{background:linear-gradient(180deg,rgba(18,26,40,.78),rgba(10,16,26,.66));border:1px solid rgba(255,255,255,.1)}}
+  html.rail-collapsed .rail{width:76px}
+  body{padding-right:290px}
+  html.rail-collapsed body{padding-right:112px}
+  .rbrand{display:flex;align-items:center;gap:10px;padding:4px 4px 14px;border-bottom:1px solid var(--gl-bd);margin-bottom:10px}
+  .rlogo{width:38px;height:38px;flex:0 0 38px;border-radius:12px;background:linear-gradient(135deg,#2563EB,#14B8A6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 8px 20px rgba(37,99,235,.35)}
+  .rbt{display:flex;flex-direction:column;min-width:0;flex:1}
+  .rbt b{font-size:15px;color:var(--ink)}
+  .rbt small{font-size:11px;color:var(--muted)}
+  #railToggle{width:30px;height:30px;flex:0 0 30px;border-radius:10px;border:1px solid var(--gl-bd);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;padding:0}
+  .rch{display:inline-block;transition:transform .3s ease}
+  html.rail-collapsed #railToggle .rch{transform:rotate(180deg)}
+  .rlabel{font-size:11px;letter-spacing:.4px;color:var(--muted);padding:12px 10px 6px;text-transform:none}
+  .rail a{border-radius:16px;margin:2px 0;padding:10px 12px;position:relative}
+  .rail a.active{background:linear-gradient(90deg,rgba(37,99,235,.16),rgba(20,184,166,.10));box-shadow:inset 3px 0 0 #14B8A6,0 8px 22px rgba(20,184,166,.14)}
+  .rail a.active .ri{color:#14B8A6}
+  .rail .ri{width:30px;height:30px;flex:0 0 30px;border-radius:10px;background:var(--surface);border:1px solid var(--gl-bd);font-size:13px;color:var(--accent)}
+  .rfoot{margin-top:auto;display:flex;align-items:center;gap:8px;padding:12px 10px;border-top:1px solid var(--gl-bd);font-size:12.5px;color:var(--muted)}
+  .rdot{width:9px;height:9px;border-radius:50%;background:#14B8A6;box-shadow:0 0 0 4px rgba(20,184,166,.18)}
+  html.rail-collapsed .rbt,html.rail-collapsed .rlabel,html.rail-collapsed .rfoot .rl{display:none}
+  html.rail-collapsed .rbrand{justify-content:center}
+  html.rail-collapsed .rail a{justify-content:center}
+}
+/* ===== داشبورد ابزارها (طرح کلیپ V10) ===== */
+.sjd{max-width:1060px;margin:18px auto 8px;padding:0 6px}
+.sjd-top{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.sjd-card{border-radius:20px;padding:16px 18px;background:var(--gl-bg);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--gl-bd);box-shadow:var(--gl-sh);position:relative;overflow:hidden}
+.sjd-card .lb{font-size:12.5px;color:var(--muted)}
+.sjd-card .vl{font-size:26px;font-weight:800;color:var(--ink);margin-top:6px;letter-spacing:-.5px}
+.sjd-card .tr{display:inline-block;margin-top:8px;font-size:11.5px;padding:3px 10px;border-radius:999px;background:rgba(20,184,166,.14);color:#0f766e}
+.sjd-card .gl{position:absolute;inset-inline-end:-30px;top:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(20,184,166,.28),transparent 70%)}
+.sjd-mid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-top:14px}
+.sjd-panel{border-radius:22px;padding:18px;background:var(--gl-bg);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--gl-bd);box-shadow:var(--gl-sh)}
+.sjd-panel h4{margin:0 0 12px;font-size:14px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+.sjd-panel h4 small{font-weight:400;color:var(--muted);font-size:11.5px}
+.sjd-bars{display:flex;align-items:flex-end;gap:12px;height:150px;padding-top:6px}
+.sjd-bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%}
+.sjd-bars i{display:block;width:100%;max-width:38px;border-radius:12px 12px 6px 6px;background:linear-gradient(180deg,#14B8A6,#2563EB);box-shadow:0 10px 22px rgba(37,99,235,.25);transition:height .9s cubic-bezier(.2,.8,.2,1)}
+.sjd-bars span{font-size:11px;color:var(--muted)}
+.sjd-ring{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;height:100%}
+.sjd-ring svg{width:130px;height:130px}
+.sjd-ring b{font-size:20px;color:var(--ink)}
+.sjd-tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+.sjd-tbl th,.sjd-tbl td{padding:10px 8px;border-bottom:1px solid var(--gl-bd);text-align:start;color:var(--ink)}
+.sjd-tbl th{color:var(--muted);font-weight:500;font-size:12px}
+.sjd-pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;background:rgba(37,99,235,.12);color:#1d4ed8}
+.sjd-pill.ok{background:rgba(20,184,166,.15);color:#0f766e}
+.sjd-pill.wait{background:rgba(245,158,11,.16);color:#92400e}
+.sjd-pill.hold{background:rgba(239,68,68,.14);color:#991b1b}
+@media (max-width:900px){.sjd-top{grid-template-columns:1fr 1fr}.sjd-mid{grid-template-columns:1fr}}
+
+/* ===== ابزارها به سبک کلیپ‌ها: پنل‌های شیشه‌ای، تب‌های شناور، جدول روان ===== */
+.tool-wrap{background:transparent}
+.tool-head{background:transparent !important;padding:18px 0 6px}
+.tool-head h1{background:linear-gradient(90deg,var(--ink),#2563EB 60%,#14B8A6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs{background:var(--gl-bg) !important;backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid var(--gl-bd) !important;border-radius:999px !important;box-shadow:var(--gl-sh);padding:6px !important;gap:6px}
+.tab{border-radius:999px !important;transition:background .3s ease,color .3s ease,transform .25s ease}
+.tab:hover{transform:translateY(-1px)}
+.tab.active{background:linear-gradient(135deg,#2563EB,#14B8A6) !important;color:#fff !important;box-shadow:0 10px 26px rgba(37,99,235,.35) !important}
+.tab.active svg{color:#fff !important}
+#page-tool section,.tool-wrap section,.ldwrap,.stats,.ldlists,.ldbar,.ldstmt,#payBox,#ldStmtBox,.dash,#sjDash .sjd-panel{background:var(--gl-bg) !important;backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--gl-bd) !important;border-radius:22px !important;box-shadow:var(--gl-sh)}
+.stats>div,.stat,.kpi{background:var(--gl-bg) !important;border:1px solid var(--gl-bd) !important;border-radius:18px !important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 28px rgba(15,23,42,.10)}
+.ldt{border-radius:18px;overflow:hidden}
+.ldt thead th{background:linear-gradient(180deg,rgba(37,99,235,.14),rgba(20,184,166,.10)) !important;color:var(--ink) !important;position:sticky;top:0;z-index:2;backdrop-filter:blur(12px)}
+.ldt tbody tr{transition:background .25s ease}
+.ldt tbody tr:hover{background:rgba(20,184,166,.08)}
+.ldt input,.ldt select{border-radius:12px !important;border:1px solid var(--gl-bd) !important;background:rgba(255,255,255,.55) !important;transition:box-shadow .25s ease,border-color .25s ease}
+:root[data-theme="dark"] .ldt input,:root[data-theme="dark"] .ldt select{background:rgba(255,255,255,.06) !important}
+.ldt input:focus,.ldt select:focus{border-color:#14B8A6 !important;box-shadow:0 0 0 4px rgba(20,184,166,.22) !important}
+.btn-blue,.btn-mint,button.primary,.dl.primary{background:linear-gradient(135deg,#2563EB,#14B8A6) !important;border-radius:14px !important}
+.btn-line,button.ghost,button.dl,.ldlists button,.ldbar button{background:var(--gl-bg) !important;border:1px solid var(--gl-bd) !important;border-radius:14px !important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.btn-line:hover,button.ghost:hover,button.dl:hover,.ldlists button:hover,.ldbar button:hover{transform:translateY(-2px);border-color:rgba(20,184,166,.55) !important;box-shadow:0 12px 26px rgba(20,184,166,.18)}
+#ldList{border-radius:14px !important}
+.msg.good{color:#0f766e}
+.sjd-panel,.sjd-card{transition:transform .35s ease,box-shadow .35s ease}
+.sjd-panel:hover,.sjd-card:hover{transform:translateY(-4px)}
 </style>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -752,6 +908,36 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
 <meta name="apple-mobile-web-app-title" content="شبا جمع">
 </head>
 <body>
+<nav class="rail" aria-label="بخش‌های سایت">
+  <div class="rbrand"><span class="rlogo">ش</span><div class="rbt"><b>شبا جمع</b><small>حساب‌وکتاب هوشمند</small></div><button type="button" id="railToggle" aria-label="باز و بسته کردن"><span class="rch">‹</span></button></div>
+  <div class="rlabel">منو</div>
+  <a href="#/" data-r="/"><span class="ri">⌂</span><span class="rl">خانه</span></a>
+  <a href="#/tool" data-r="/tool"><span class="ri">▦</span><span class="rl">داشبورد ابزارها</span></a>
+  <div class="rlabel">ابزارها</div>
+  <a href="#/tool/load" data-r="/tool/load"><span class="ri">1</span><span class="rl">لیست بار</span></a>
+  <a href="#/tool/convert" data-r="/tool/convert"><span class="ri">2</span><span class="rl">تبدیل حساب به شبا</span></a>
+  <a href="#/tool/jam" data-r="/tool/jam"><span class="ri">3</span><span class="rl">تجمیع شبا و پیام‌ها</span></a>
+  <a href="#/tool/daftar" data-r="/tool/daftar"><span class="ri">4</span><span class="rl">دفتر شبا</span></a>
+  <a href="#/tool/bar" data-r="/tool/bar"><span class="ri">5</span><span class="rl">حساب بار قایق</span></a>
+  <a href="#/tool/lanj" data-r="/tool/lanj"><span class="ri">6</span><span class="rl">خرید لنج</span></a>
+  <div class="rlabel">بیشتر</div>
+  <a href="#/pricing" data-r="/pricing"><span class="ri">₮</span><span class="rl">قیمت‌ها</span></a>
+  <a href="#/guide" data-r="/guide"><span class="ri">?</span><span class="rl">راهنما</span></a>
+  <a href="#/contact" data-r="/contact"><span class="ri">✉</span><span class="rl">تماس با ما</span></a>
+  <a href="#/account" data-r="/account"><span class="ri">◉</span><span class="rl">حساب من</span></a>
+  <div class="rfoot"><span class="rdot"></span><span class="rl">اشتراک و پشتیبان</span></div>
+</nav>
+<script>
+(function(){
+  var h=document.documentElement;
+  try{ if(localStorage.getItem('sj_rail')==='1') h.classList.add('rail-collapsed'); }catch(e){}
+  var tg=document.getElementById('railToggle');
+  if(tg) tg.addEventListener('click',function(){ var c=h.classList.toggle('rail-collapsed'); try{ localStorage.setItem('sj_rail',c?'1':'0'); }catch(e){} });
+  function mark(){ var hs=location.hash||'#/'; document.querySelectorAll('.rail a[data-r]').forEach(function(a){ var r=a.getAttribute('data-r'); a.classList.toggle('active', hs===('#'+r) || (r!=='/' && hs.indexOf('#'+r)===0)); }); }
+  window.addEventListener('hashchange',mark); mark();
+})();
+</script>
+
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
 <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
@@ -802,7 +988,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
       <div class="hero-text">
         <span class="eyebrow">همراه مطمئن حساب‌وکتاب شما</span>
         <h1>نرم‌افزار حسابداری<br><span class="mint">شبا جمع</span></h1>
-        <p>حساب بار قایق، تجمیع شبا، خرید لنج و دفتر شبا؛ همه در یک اپ ساده، سریع و هماهنگ با تقویم شمسی.</p>
+        <p>کارهای حساب‌وکتاب و پرداخت گروهی‌ات را سریع و بدون اشتباه انجام بده. همه‌چیز روی گوشی و کامپیوتر خودت.</p>
         <div class="cta"><a class="btn-blue" href="#/tool">شروع کار <svg class="i"><use href="#i-arrow"/></svg></a><a class="btn-line" href="#/pricing">طرح‌ها و لیست قیمت</a></div>
         <p class="hero-gift">یا <a href="https://t.me/shabajambot?start=trial" target="_blank" rel="noopener">سه روز اشتراک رایگان</a> را از ربات تلگرام بگیر.</p>
         <div class="hero-stat"><span class="hs-item">فایل‌ها روی دستگاه خودت می‌مانند</span><span class="hs-item">روی گوشی و کامپیوتر</span><span class="hs-item">تقویم شمسی</span></div>
@@ -817,26 +1003,26 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
 
   <div class="sec">
     <div class="container">
-      <div class="sec-head"><h2>ابزارهای شبا جمع</h2><p>هر کار حساب‌وکتاب، یک ابزار.</p></div>
+      <div class="sec-head"><h2>ابزارهای شبا جمع</h2><p>برای هر کار، یک ابزار جدا.</p></div>
       <div class="bento">
-      <a class="tcard bt bt-load a-load" style="--i:0;--tc:#2563EB" href="#/tool/load"><span class="no">۱</span><span class="bt-top"><span class="ti g2"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="viz viz-load"><i></i><i></i><i></i><i></i><i></i></span></span><span class="tx"><b>لیست بار</b><span class="d">ثبت بشکه و محاسبه مبلغ</span></span></a>
-      <a class="tcard bt bt-convert a-convert" style="--i:1;--tc:#9333EA" href="#/tool/convert"><span class="no">۲</span><span class="bt-top"><span class="ti g3"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><span class="viz viz-conv"><em>6037</em><u>›</u><em>IR</em></span></span><span class="tx"><b>حساب به شبا</b><span class="d">تبدیل شماره حساب به شبا</span></span></a>
+      <a class="tcard bt bt-load a-load" style="--i:0;--tc:#2563EB" href="#/tool/load"><span class="no">۱</span><span class="bt-top"><span class="ti g2"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="viz viz-load"><i></i><i></i><i></i><i></i><i></i></span></span><span class="tx"><b>لیست بار</b><span class="d">بشکه و مبلغ را خودکار حساب کن</span></span></a>
+      <a class="tcard bt bt-convert a-convert" style="--i:1;--tc:#9333EA" href="#/tool/convert"><span class="no">۲</span><span class="bt-top"><span class="ti g3"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><span class="viz viz-conv"><em>6037</em><u>›</u><em>IR</em></span></span><span class="tx"><b>حساب به شبا</b><span class="d">شماره حساب را به شبا تبدیل کن</span></span></a>
       <a class="tcard bt bt-jam a-jam" style="--i:2;--tc:#4F46E5" href="#/tool/jam"><span class="no">۳</span><span class="bt-top"><span class="ti g1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5H7l6 7-6 7h11"/></svg></span><span class="viz viz-jam"><i></i><i></i><i></i><b>✓</b></span></span><span class="tx"><b>تجمیع شبا و پیام‌ها</b><span class="d">شباهای تکراری را جمع کن و پیام آماده بگیر</span></span></a>
-      <a class="tcard bt bt-daftar a-daftar" style="--i:3;--tc:#D97706" href="#/tool/daftar"><span class="no">۴</span><span class="bt-top"><span class="ti g4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 8h6"/></svg></span><span class="viz viz-daf"><i>ع</i><i>م</i><i>ر</i></span></span><span class="tx"><b>دفتر شبا</b><span class="d">نام‌ها و شباهای ذخیره‌شده</span></span></a>
+      <a class="tcard bt bt-daftar a-daftar" style="--i:3;--tc:#D97706" href="#/tool/daftar"><span class="no">۴</span><span class="bt-top"><span class="ti g4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 8h6"/></svg></span><span class="viz viz-daf"><i>ع</i><i>م</i><i>ر</i></span></span><span class="tx"><b>دفتر شبا</b><span class="d">همه‌ی نام‌ها و شباها، یک‌جا</span></span></a>
       <a class="tcard bt bt-bar a-bar" style="--i:4;--tc:#E11D48" href="#/tool/bar"><span class="no">۵</span><span class="bt-top"><span class="ti g5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="viz viz-bar"><i></i><b></b></span></span><span class="tx"><b>حساب بار قایق</b><span class="d">حساب‌وکتاب بار</span></span></a>
-      <a class="tcard bt bt-lanj a-lanj" style="--i:5;--tc:#059669" href="#/tool/lanj"><span class="no">۶</span><span class="bt-top"><span class="ti g6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M12 3l6 9h-6M4 17l2 3h12l2-3z"/></svg></span><span class="viz viz-lanj"><b></b><i></i></span></span><span class="tx"><b>خرید لنج</b><span class="d">ثبت و محاسبه خرید</span></span></a>
+      <a class="tcard bt bt-lanj a-lanj" style="--i:5;--tc:#059669" href="#/tool/lanj"><span class="no">۶</span><span class="bt-top"><span class="ti g6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M12 3l6 9h-6M4 17l2 3h12l2-3z"/></svg></span><span class="viz viz-lanj"><b></b><i></i></span></span><span class="tx"><b>خرید لنج</b><span class="d">خریدها را ثبت و حساب کن</span></span></a>
     </div>
     </div>
   </div>
 
   <div class="sec">
     <div class="container">
-      <div class="sec-head"><h2>هرچه برای پرداخت گروهی لازم داری</h2><p>از فایل خام اکسل تا پیام آماده و فایل نهایی، در یک جا.</p></div>
+      <div class="sec-head"><h2>هرچه برای پرداخت گروهی لازم داری</h2><p>از فایل اکسل تا پیام آماده، همه در یک جا.</p></div>
       <div class="grid3">
         <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M5 4h14M5 20h14M8 4l7 8-7 8"/></svg></div><h3>تجمیع شباهای تکراری</h3><p>فقط شباهایی که به حداقل تکرار تعیین‌شده رسیده‌اند جمع می‌شوند؛ بقیه‌ی ردیف‌ها همان‌طور که هستند می‌مانند.</p></div>
         <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></div><h3>خروجی اکسل مثل فایل ورودی</h3><p>هدر، ترتیب ستون‌ها و ردیف جمع کل همان فایل خودت است. شماره فاکتورهای یک شبا کنار هم می‌آید.</p></div>
         <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.5A8 8 0 1 1 21 12z"/></svg></div><h3>پیام آماده‌ی واتساپ</h3><p>برای هر ردیف پیام شبا، نام، بانک و مبلغ به تومان. با یک کلیک کپی کن یا مستقیم در واتساپ باز کن.</p></div>
-        <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><h3>تبدیل شماره حساب به شبا</h3><p>شماره حساب بانک کشاورزی را تکی یا از روی فایل به شبا تبدیل کن و خروجی اکسل بگیر.</p></div>
+        <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></div><h3>شماره حساب را به شبا تبدیل کن</h3><p>شماره حساب بانک کشاورزی را تکی یا از روی فایل به شبا تبدیل کن و خروجی اکسل بگیر.</p></div>
         <div class="card feat"><div class="ico"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div><h3>روی گوشی و کامپیوتر</h3><p>مثل یک برنامه روی صفحه‌ی اصلی گوشی نصب می‌شود و با ظاهر واکنش‌گرا روی هر صفحه‌ای خوانا است.</p></div>
       </div>
     </div>
@@ -846,9 +1032,9 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
     <div class="container">
       <div class="sec-head"><h2>چطور کار می‌کند</h2><p>سه قدم ساده.</p></div>
       <div class="steps">
-        <div class="step"><h3>فایل را انتخاب کن</h3><p>فایل اکسل، xls یا csv پرداخت‌ها را بده. ستون‌ها خودکار تشخیص داده می‌شود.</p></div>
-        <div class="step"><h3>تنظیمات را بگذار</h3><p>حداقل تکرار برای جمع‌زدن، واحد مبلغ و قالب پیام را مشخص کن.</p></div>
-        <div class="step"><h3>خروجی را بگیر</h3><p>اکسل نهایی را دانلود کن و پیام‌ها را یکی‌یکی کپی کن.</p></div>
+        <div class="step"><h3>فایل را انتخاب کن</h3><p>فایل پرداخت‌ها (اکسل یا csv) را بده. ستون‌ها خودکار پیدا می‌شوند.</p></div>
+        <div class="step"><h3>تنظیمات را بگذار</h3><p>حداقل تکرار، واحد مبلغ و قالب پیام را مشخص کن.</p></div>
+        <div class="step"><h3>خروجی را بگیر</h3><p>اکسل نهایی را بگیر و پیام‌ها را کپی کن.</p></div>
       </div>
     </div>
   </div>
@@ -857,14 +1043,14 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
     <div class="container">
       <div class="trust">
         <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9.5 12l2 2 3-3.5"/></svg>
-        <div><h3>فایل‌های تو جایی آپلود نمی‌شوند</h3><p>همه‌ی محاسبه‌ها روی دستگاه خودت انجام می‌شود. اطلاعات مالی‌ات به هیچ سروری فرستاده نمی‌شود.</p></div>
+        <div><h3>فایل‌های تو جایی آپلود نمی‌شوند</h3><p>همه‌چیز روی دستگاه خودت انجام می‌شود. اطلاعاتت به هیچ سروری فرستاده نمی‌شود.</p></div>
       </div>
     </div>
   </div>
 
   <div class="sec alt">
     <div class="container">
-      <div class="sec-head"><h2>اشتراک</h2><p>با پرداخت هفتگی، ماهانه، سه‌ماهه یا سالانه، همه‌ی ابزارها فعال می‌شود.</p></div>
+      <div class="sec-head"><h2>اشتراک</h2><p>با هر کدام از این طرح‌ها، همه‌ی ابزارها فعال می‌شوند.</p></div>
       <div class="plans" id="plansHome"></div>
       <p class="after"><a href="#/pricing">جزئیات بیشتر درباره‌ی اشتراک</a></p>
     </div>
@@ -901,7 +1087,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
         </video>
       </div>
       <div class="acc">
-        <details><summary>آیا فایل‌هایم جایی آپلود می‌شود؟</summary><p>نه. فایل داخل مرورگر خودت خوانده و پردازش می‌شود و به سرور فرستاده نمی‌شود.</p></details>
+        <details><summary>آیا فایل‌هایم جایی آپلود می‌شود؟</summary><p>نه. فایل‌ها داخل مرورگر خودت خوانده می‌شوند و به هیچ سروری فرستاده نمی‌شوند.</p></details>
         <details><summary>اشتراک چطور فعال می‌شود؟</summary><p>بعد از پرداخت یک لینک فعال‌سازی دریافت می‌کنی. فقط روی آن می‌زنی و ابزارها فعال می‌شود. اگر لینک کار نکرد، کد اشتراک را در «حساب من» وارد کن.</p></details>
         <details><summary>روی گوشی هم کار می‌کند؟</summary><p>بله. در اندروید (Chrome) گزینه‌ی Install app و در آیفون (Safari) گزینه‌ی Add to Home Screen را بزن تا مثل یک برنامه نصب شود.</p></details>
         <details><summary>بعد از تمام شدن اشتراک چه می‌شود؟</summary><p>ابزارها قفل می‌شوند و با کد جدید دوباره فعال می‌شوند. فایل‌های خروجی که قبلاً گرفته‌ای سر جایشان هستند.</p></details>
@@ -923,7 +1109,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
       <p>فایل را بده، خروجی و پیام‌ها را بگیر.</p>
       <div class="tabs" role="tablist">
         <button class="tab" id="tabLoad" type="button" role="tab">لیست بار</button>
-        <button class="tab" id="tabConv" type="button" role="tab">تبدیل شماره حساب به شبا</button>
+        <button class="tab" id="tabConv" type="button" role="tab">شماره حساب را به شبا تبدیل کن</button>
         <button class="tab active" id="tabMain" type="button" role="tab">تجمیع شبا و پیام‌ها</button>
         <button class="tab" id="tabDaftar" type="button" role="tab"><svg class="i"><use href="#t-daftar"/></svg> دفتر شبا</button>
         <button class="tab" id="tabBar" type="button" role="tab"><svg class="i"><use href="#t-bar"/></svg> حساب بار قایق</button>
@@ -953,12 +1139,12 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
       </div>
     </div>
       <div class="bento">
-      <a class="tcard bt bt-load a-load" style="--i:0;--tc:#2563EB" href="#/tool/load"><span class="no">۱</span><span class="bt-top"><span class="ti g2"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="viz viz-load"><i></i><i></i><i></i><i></i><i></i></span></span><span class="tx"><b>لیست بار</b><span class="d">ثبت بشکه و محاسبه مبلغ</span></span></a>
-      <a class="tcard bt bt-convert a-convert" style="--i:1;--tc:#9333EA" href="#/tool/convert"><span class="no">۲</span><span class="bt-top"><span class="ti g3"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><span class="viz viz-conv"><em>6037</em><u>›</u><em>IR</em></span></span><span class="tx"><b>حساب به شبا</b><span class="d">تبدیل شماره حساب به شبا</span></span></a>
+      <a class="tcard bt bt-load a-load" style="--i:0;--tc:#2563EB" href="#/tool/load"><span class="no">۱</span><span class="bt-top"><span class="ti g2"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span><span class="viz viz-load"><i></i><i></i><i></i><i></i><i></i></span></span><span class="tx"><b>لیست بار</b><span class="d">بشکه و مبلغ را خودکار حساب کن</span></span></a>
+      <a class="tcard bt bt-convert a-convert" style="--i:1;--tc:#9333EA" href="#/tool/convert"><span class="no">۲</span><span class="bt-top"><span class="ti g3"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><span class="viz viz-conv"><em>6037</em><u>›</u><em>IR</em></span></span><span class="tx"><b>حساب به شبا</b><span class="d">شماره حساب را به شبا تبدیل کن</span></span></a>
       <a class="tcard bt bt-jam a-jam" style="--i:2;--tc:#4F46E5" href="#/tool/jam"><span class="no">۳</span><span class="bt-top"><span class="ti g1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5H7l6 7-6 7h11"/></svg></span><span class="viz viz-jam"><i></i><i></i><i></i><b>✓</b></span></span><span class="tx"><b>تجمیع شبا و پیام‌ها</b><span class="d">شباهای تکراری را جمع کن و پیام آماده بگیر</span></span></a>
-      <a class="tcard bt bt-daftar a-daftar" style="--i:3;--tc:#D97706" href="#/tool/daftar"><span class="no">۴</span><span class="bt-top"><span class="ti g4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 8h6"/></svg></span><span class="viz viz-daf"><i>ع</i><i>م</i><i>ر</i></span></span><span class="tx"><b>دفتر شبا</b><span class="d">نام‌ها و شباهای ذخیره‌شده</span></span></a>
+      <a class="tcard bt bt-daftar a-daftar" style="--i:3;--tc:#D97706" href="#/tool/daftar"><span class="no">۴</span><span class="bt-top"><span class="ti g4"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM9 8h6"/></svg></span><span class="viz viz-daf"><i>ع</i><i>م</i><i>ر</i></span></span><span class="tx"><b>دفتر شبا</b><span class="d">همه‌ی نام‌ها و شباها، یک‌جا</span></span></a>
       <a class="tcard bt bt-bar a-bar" style="--i:4;--tc:#E11D48" href="#/tool/bar"><span class="no">۵</span><span class="bt-top"><span class="ti g5"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><span class="viz viz-bar"><i></i><b></b></span></span><span class="tx"><b>حساب بار قایق</b><span class="d">حساب‌وکتاب بار</span></span></a>
-      <a class="tcard bt bt-lanj a-lanj" style="--i:5;--tc:#059669" href="#/tool/lanj"><span class="no">۶</span><span class="bt-top"><span class="ti g6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M12 3l6 9h-6M4 17l2 3h12l2-3z"/></svg></span><span class="viz viz-lanj"><b></b><i></i></span></span><span class="tx"><b>خرید لنج</b><span class="d">ثبت و محاسبه خرید</span></span></a>
+      <a class="tcard bt bt-lanj a-lanj" style="--i:5;--tc:#059669" href="#/tool/lanj"><span class="no">۶</span><span class="bt-top"><span class="ti g6"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M12 3l6 9h-6M4 17l2 3h12l2-3z"/></svg></span><span class="viz viz-lanj"><b></b><i></i></span></span><span class="tx"><b>خرید لنج</b><span class="d">خریدها را ثبت و حساب کن</span></span></a>
     </div>
     </div>
     <div id="toolLock" class="lockbox card hidden">
@@ -1111,7 +1297,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
   </div>
 
   <section id="secPaya">
-    <h2>تبدیل شماره حساب به شبا</h2>
+    <h2>شماره حساب را به شبا تبدیل کن</h2>
     <p class="hint" style="margin:0 0 12px">استعلام گروهی حساب⇄شبا، ساخت فایل XML پایا برای پرداخت دسته‌جمعی، و بررسی اعتبار شبا — همه داخل گوشی و بدون اینترنت.</p>
     <div class="embedwrap" data-embed="paya"><div class="embedload">در حال بارگذاری…</div></div>
   </section>
@@ -1221,7 +1407,7 @@ label.f[hidden],#ldApplyFee[hidden]{display:none !important}
         <details><summary>پیام‌های واتساپ</summary><p>قالب پیام قابل ویرایش است. متغیرها: {iban} شبا، {name} نام، {bank} بانک، {amount} مبلغ، {count} تعداد تراکنش، {invoice} شماره فاکتور. بعد از هر کپی، پیام کم‌رنگ می‌شود تا وسط کار گم نشوی.</p></details>
         <details><summary>خروجی اکسل</summary><p>«دانلود اکسل مثل فایل ورودی» همه‌ی ردیف‌ها را با همان ساختار برمی‌گرداند. «فقط شباهای جمع‌شده» فقط ردیف‌های ادغام‌شده را می‌دهد.</p></details>
         <details><summary>لیست بار</summary><p>برای هر راننده تاریخ، تعداد بشکه، مازاد به لیتر و فی را بنویس. جمع لیتر، معادل بشکه و مبلغ (ریال) خودکار حساب می‌شود. فایل اکسل لیست را می‌شود وارد کرد و خروجی اکسل همان قالب فایل لیست را دارد. ردیف‌ها روی همین دستگاه ذخیره می‌ماند تا با بستن صفحه از دست نرود؛ «پاک کردن همه» آن‌ها را حذف می‌کند.</p></details>
-        <details><summary>تبدیل شماره حساب به شبا</summary><p>شماره حساب‌ها را بنویس یا فایل بده. شبا با کد بانک کشاورزی (۰۱۶) ساخته می‌شود. خروجی اکسل چهار ستون دارد: ردیف، شماره حساب، شبا و وضعیت. حساب تسهیلات فعلاً پشتیبانی نمی‌شود.</p></details>
+        <details><summary>شماره حساب را به شبا تبدیل کن</summary><p>شماره حساب‌ها را بنویس یا فایل بده. شبا با کد بانک کشاورزی (۰۱۶) ساخته می‌شود. خروجی اکسل چهار ستون دارد: ردیف، شماره حساب، شبا و وضعیت. حساب تسهیلات فعلاً پشتیبانی نمی‌شود.</p></details>
         <details><summary>نصب روی موبایل</summary><p>اندروید (Chrome): منوی سه‌نقطه، سپس Install app. آیفون (Safari): دکمه‌ی Share، سپس Add to Home Screen.</p></details>
         <details><summary>فعال‌سازی اشتراک</summary><p>روی لینک فعال‌سازی که برایت فرستاده‌اند بزن (یا QR را با دوربین اسکن کن)؛ اشتراک خودکار فعال می‌شود. اگر لینک نداری، کد اشتراک را در بخش «حساب من» وارد کن. تاریخ انقضا همان‌جا نمایش داده می‌شود. اگر تاریخ دستگاهت را عقب ببری، برنامه اشتراک را نمی‌پذیرد.</p></details>
         <details><summary>نکته‌ی ایمنی</summary><p>قبل از هر پرداخت، شباها و مبلغ‌های خروجی را خودت بررسی کن. مسئولیت پرداخت با کاربر است.</p></details>
@@ -4326,10 +4512,19 @@ if ('serviceWorker' in navigator) {
     st.textContent = siteFontCss() + "\nhtml, html body, html input, html select, html textarea, html button, html table, html th, html td{font-family:'Yekan','IRANSans','Vazirmatn',Tahoma,'Segoe UI',Arial,sans-serif !important}";
     d.head.appendChild(st);
   }
+  var EMBED_GLASS_CSS = 'html,body{font-family:\'Yekan\',sans-serif}' +
+    'body{background:radial-gradient(900px 500px at 10% 0%,rgba(37,99,235,.10),transparent 70%),radial-gradient(800px 500px at 100% 100%,rgba(20,184,166,.10),transparent 70%) !important}' +
+    '.card,.box,.panel,section,.sec,.wrap,.tool,table{border-radius:18px !important}' +
+    '.card,.box,.panel,section,.sec{background:rgba(255,255,255,.62) !important;backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.75) !important;box-shadow:0 16px 40px rgba(15,23,42,.10) !important}' +
+    'html.sj-dark .card,html.sj-dark .box,html.sj-dark .panel,html.sj-dark section,html.sj-dark .sec{background:rgba(16,23,34,.62) !important;border:1px solid rgba(255,255,255,.10) !important}' +
+    'button,.btn,input[type=button],input[type=submit]{border-radius:14px !important;transition:transform .25s ease,box-shadow .25s ease}' +
+    'button:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(20,184,166,.20)}' +
+    'input,select,textarea{border-radius:12px !important}';
   function embedTheme(f){
     try {
       var d = f.contentDocument; if (!d || !d.documentElement || !d.head) return;
       if (!d.getElementById('sjThemeCss')){ var st = d.createElement('style'); st.id = 'sjThemeCss'; st.textContent = EMBED_DARK_CSS; d.head.appendChild(st); }
+      if (!d.getElementById('sjGlassCss')){ var gs = d.createElement('style'); gs.id = 'sjGlassCss'; gs.textContent = EMBED_GLASS_CSS; d.head.appendChild(gs); }
       embedFont(d);
       d.documentElement.classList.toggle('sj-dark', siteIsDark());
     } catch (e) {}
@@ -4366,6 +4561,60 @@ if ('serviceWorker' in navigator) {
   D.addEventListener('visibilitychange', function(){ if (!D.hidden){ names(); dash(); showCloud(); takeSnap(false); } });
   window.addEventListener('storage', function(){ names(); dash(); });
   if (D.readyState === 'loading') D.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+<script>
+(function(){
+  function movePill(nav){
+    var a=nav.querySelector('a.active'), p=nav.querySelector('.sjpill');
+    if(!p){ p=document.createElement('span'); p.className='sjpill'; nav.insertBefore(p,nav.firstChild); }
+    if(!a){ p.style.width='0px'; return; }
+    p.style.left=a.offsetLeft+'px'; p.style.width=a.offsetWidth+'px'; p.style.top=a.offsetTop+'px'; p.style.height=a.offsetHeight+'px';
+  }
+  function all(){ document.querySelectorAll('.site-header .nav').forEach(movePill); }
+  window.addEventListener('hashchange',function(){ setTimeout(all,30); });
+  window.addEventListener('resize',all);
+  setTimeout(all,200);
+})();
+</script>
+<script>
+(function(){
+  var D=document;
+  function fa(n){ return String(n).replace(/\d/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'[d];}); }
+  function num(v){ var x=parseFloat(String(v||'').replace(/[^\d.\-]/g,'')); return isNaN(x)?0:x; }
+  function loadRows(){ var out=[],reg=null; try{reg=JSON.parse(localStorage.getItem('sj_lists')||'null');}catch(e){}
+    var ids=reg&&reg.ids?reg.ids:['main'], act=(reg&&reg.active)||'main';
+    ids.forEach(function(id){ try{ var l=JSON.parse((id===act?localStorage.getItem('sj_load'):localStorage.getItem('sj_load_'+id))||'{}'); (l.rows||[]).forEach(function(r){ out.push(r); }); }catch(e){} });
+    return out; }
+  function daftarCount(){ try{ return (JSON.parse(localStorage.getItem('sheba-daftar-records')||'[]')||[]).length; }catch(e){ return 0; } }
+  function monthly(rows){ var m={}; rows.forEach(function(r){ var k=String(r.date||'').replace(/[۰-۹]/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d);}).slice(0,7); if(!/^\d{4}\/\d{2}$/.test(k)) return; m[k]=(m[k]||0)+num(r.barrels); });
+    return Object.keys(m).sort().slice(-6).map(function(k){ return {k:k,v:m[k]}; }); }
+  function pill(st){ st=st||''; var c=st==='تسویه'?'ok':(st==='در حال انتظار'?'wait':(st==='تعلیق'?'hold':'')); return '<span class="sjd-pill '+c+'">'+(st||'بدون وضعیت')+'</span>'; }
+  function render(){
+    var host=D.querySelector('.mcard-wrap'); if(!host) return;
+    var box=D.getElementById('sjDash');
+    if(!box){ box=D.createElement('div'); box.id='sjDash'; box.className='sjd'; host.parentNode.insertBefore(box,host.nextSibling); }
+    var rows=loadRows(), totalB=0, settled=0; rows.forEach(function(r){ totalB+=num(r.barrels); if(r.status==='تسویه') settled++; });
+    var pct=rows.length?Math.round(settled*100/rows.length):0;
+    var mo=monthly(rows), maxV=1; mo.forEach(function(x){ if(x.v>maxV) maxV=x.v; });
+    var bars=mo.length?mo.map(function(x){ return '<div><i style="height:'+Math.max(6,Math.round(x.v*100/maxV))+'%"></i><span>'+fa(x.k.slice(5))+'</span></div>'; }).join(''):'<div><span>هنوز داده‌ای نیست</span></div>';
+    var last=rows.slice(-5).reverse();
+    var tbl=last.length?'<table class="sjd-tbl"><thead><tr><th>شماره فاکتور</th><th>نام / حساب</th><th>بشکه</th><th>وضعیت</th></tr></thead><tbody>'+last.map(function(r){ return '<tr><td>'+esc(r.invoice||'—')+'</td><td>'+esc(r.holder||r.driver||r.account||'—')+'</td><td>'+fa(num(r.barrels).toFixed(2))+'</td><td>'+pill(r.status)+'</td></tr>'; }).join('')+'</tbody></table>':'<p style="color:var(--muted);font-size:13px;margin:12px 0 0">هنوز ردیفی در لیست بار نیست.</p>';
+    var circ=2*Math.PI*52, off=circ*(1-pct/100);
+    box.innerHTML='<div class="sjd-top">'+
+      '<div class="sjd-card"><span class="gl"></span><div class="lb">ردیف‌های لیست بار</div><div class="vl">'+fa(rows.length)+'</div><span class="tr">همه‌ی لیست‌ها</span></div>'+
+      '<div class="sjd-card"><span class="gl"></span><div class="lb">مجموع بشکه</div><div class="vl">'+fa(totalB.toFixed(2))+'</div><span class="tr">بشکه</span></div>'+
+      '<div class="sjd-card"><span class="gl"></span><div class="lb">شباهای دفتر</div><div class="vl">'+fa(daftarCount())+'</div><span class="tr">ذخیره‌شده</span></div>'+
+      '<div class="sjd-card"><span class="gl"></span><div class="lb">تسویه‌شده</div><div class="vl">'+fa(pct)+'٪</div><span class="tr">'+fa(settled)+' ردیف</span></div>'+
+      '</div>'+
+      '<div class="sjd-mid"><div class="sjd-panel"><h4>بشکه‌ی ماهانه <small>۶ ماه اخیر</small></h4><div class="sjd-bars">'+bars+'</div></div>'+
+      '<div class="sjd-panel"><h4>وضعیت تسویه <small>همه‌ی ردیف‌ها</small></h4><div class="sjd-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(148,163,184,.25)" stroke-width="12"/><circle cx="60" cy="60" r="52" fill="none" stroke="url(#sjg)" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+circ.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 60 60)"/><defs><linearGradient id="sjg" x1="0" x2="1"><stop offset="0" stop-color="#14B8A6"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs></svg><b>'+fa(pct)+'٪</b></div></div></div>'+
+      '<div class="sjd-panel" style="margin-top:14px"><h4>آخرین ردیف‌ها <small>۵ ردیف</small></h4>'+tbl+'</div>';
+  }
+  function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  window.addEventListener('hashchange',function(){ setTimeout(render,60); });
+  window.addEventListener('storage',render);
+  setTimeout(render,400);
 })();
 </script>
 </body>
